@@ -2,7 +2,8 @@
 import sys
 import os
 import argparse
-import PIL
+from PIL import Image
+import numpy as np
 import subprocess
 import shutil
 
@@ -22,7 +23,7 @@ def parse_command_line_arguments(arguments=None):
     parser = argparse.ArgumentParser(description=description)
 
     arg_help = 'The input stack or image sequence that will be processed to generate the output data'
-    parser.add_argument('--input-sequenece', action='store', help=arg_help)
+    parser.add_argument('--input-sequence', action='store', help=arg_help)
 
     arg_help = 'Output directory, where the final results/artefacts will be stored'
     parser.add_argument('--output-directory', action='store', help=arg_help)
@@ -36,10 +37,14 @@ def parse_command_line_arguments(arguments=None):
 if __name__ == "__main__":
 
     # Parse the command line arguments
-    args = parse_command_line_arguments(sys.argv)
+    arguments = parse_command_line_arguments()
 
-
-    im = PIL.Image.open(args.input_sequence)
-    im.show()
-
+    dataset = Image.open(arguments.input_sequence)
     
+    h,w = np.shape(dataset)
+    tiffarray = np.zeros((h,w,dataset.n_frames))
+    for i in range(dataset.n_frames):
+        dataset.seek(i)
+        tiffarray[:,:,i] = np.array(dataset)
+        expim = tiffarray.astype(np.double)
+    print(expim.shape)
