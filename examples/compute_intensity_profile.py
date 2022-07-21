@@ -13,7 +13,6 @@ from matplotlib.ticker import FuncFormatter
 # Per-adjust all the plotting configuration
 ####################################################################################################
 font_size = 30
-#sns.set_style("whitegrid")
 plt.rcParams['axes.grid'] = 'True'
 plt.rcParams['grid.linestyle'] = '-'
 plt.rcParams['grid.linewidth'] = 0.5
