@@ -5,8 +5,6 @@ import cv2
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
-from matplotlib.ticker import PercentFormatter
-from matplotlib.ticker import FuncFormatter
 
 
 ####################################################################################################
