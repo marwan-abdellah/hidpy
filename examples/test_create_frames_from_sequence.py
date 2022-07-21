@@ -7,13 +7,7 @@ from sys import stdout
 ####################################################################################################
 # @parse_command_line_arguments
 ####################################################################################################
-def parse_command_line_arguments(arguments=None):
-    """Parses the input arguments.
-    :param arguments:
-        Command line arguments.
-    :return:
-        Argument list.
-    """
+def parse_command_line_arguments():
 
     # add all the options
     description = 'This application takes an input sequence and creates a set of frames.'
@@ -59,7 +53,7 @@ def write_frame_to_file(video_capture, frame_number, output_directory, extension
     
 
 ####################################################################################################
-# @parse_command_line_arguments
+# @convert_video_to_frames
 ####################################################################################################
 def convert_video_to_frames(args):
 
