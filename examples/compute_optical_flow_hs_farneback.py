@@ -97,9 +97,6 @@ def compute_optical_flow_franeback(args):
         # Converts HSV to RGB (BGR) color representation
         rgb = cv2.cvtColor(mask, cv2.COLOR_HSV2BGR)
         
-        # Opens a new window and displays the output frame
-        # cv2.imshow("Dense Optical Flow", rgb)
-        
         cv2.imshow('Dense Optical Flow', rgb)
         k = cv2.waitKey(100) & 0xff
 
