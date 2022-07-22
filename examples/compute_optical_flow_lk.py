@@ -44,9 +44,25 @@ def get_frame(video_capture, frame_number):
 
     
 ####################################################################################################
-# @compute_optical_flow_franeback
+# @compute_optical_flow_lk
 ####################################################################################################
-def compute_optical_flow_franeback(args):
+def compute_optical_flow_lk(args):
+
+
+
+    # Adjust the parameters for corner detection
+    feature_params = dict(maxCorners=100,
+                          qualityLevel=0.3,
+                          minDistance=7,
+                          blockSize=7)
+    
+    # Adjust the parameters for lucas kanade optical flow
+    lk_params = dict(winSize=(15, 15),
+                     maxLevel=0,
+                     criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))
+
+    # Create some random colors
+    color = np.random.randint(0, 255, (100, 3))
 
     # Read the video anc create the VideoCapture object 
     video_capture = cv2.VideoCapture(args.input_sequence)
@@ -60,11 +76,12 @@ def compute_optical_flow_franeback(args):
     # Creates an image filled with zero intensities with the same dimensions as the frame
     mask = np.zeros_like(frame_0)
 
-    # Sets image saturation to maximum
-    mask[..., 1] = 255
-
+    # Compute the grayscale image of the first frame 
     frame_0 = cv2.cvtColor(frame_0, cv2.COLOR_BGR2GRAY)
 
+    # Finding corners based on good features to track 
+    p0 = cv2.goodFeaturesToTrack(frame_0, mask=None, **feature_params)
+                                
     # Process the sequence, frame[i] and frame[i + 1]
     for i in range(1, number_frames - 1):
         
@@ -73,37 +90,37 @@ def compute_optical_flow_franeback(args):
 
         # Get the second frame and compute its gray scale 
         frame_1 = get_frame(video_capture=video_capture, frame_number=i)        
-        frame_1 = cv2.cvtColor(frame_1, cv2.COLOR_BGR2GRAY)
+        frame_1_gray = cv2.cvtColor(frame_1, cv2.COLOR_BGR2GRAY)
 
         cv2.imshow('Input Frame 1', frame_0)
         k = cv2.waitKey(100) & 0xff
 
-        cv2.imshow('Input Frame 2', frame_1)
-        k = cv2.waitKey(100) & 0xff
-        
-        # Calculates dense optical flow by Farneback method
-        flow = cv2.calcOpticalFlowFarneback(
-            frame_0, frame_1, None, 0.5, 3, 15, 3, 5, 1.2, 0)
-        
-        # Computes the magnitude and angle of the 2D vectors
-        magnitude, angle = cv2.cartToPolar(flow[..., 0], flow[..., 1])
+        cv2.imshow('Input Frame 2', frame_1_gray)
+        k = cv2.waitKey(1000) & 0xff
 
-        # Sets image hue according to the optical flow direction
-        mask[..., 0] = angle * 180 / np.pi / 2
-        
-        # Sets image value according to the optical flow magnitude (normalized)
-        mask[..., 2] = cv2.normalize(magnitude, None, 0, 255, cv2.NORM_MINMAX)
-        
-        # Converts HSV to RGB (BGR) color representation
-        rgb = cv2.cvtColor(mask, cv2.COLOR_HSV2BGR)
-        
-        # Opens a new window and displays the output frame
-        # cv2.imshow("Dense Optical Flow", rgb)
-        
-        cv2.imshow('Dense Optical Flow', rgb)
+        # Calculate optical flow by the Lucas Kandas method 
+        p1, st, err = cv2.calcOpticalFlowPyrLK(frame_0, frame_1_gray, p0, None, **lk_params)
+
+        # Select good points
+        good_new = p1[st == 1]
+        good_old = p0[st == 1]
+
+        # draw the tracks
+        for i, (new, old) in enumerate(zip(good_new, good_old)):
+            
+            a, b = new.ravel()
+            c, d = old.ravel()
+
+            mask = cv2.line(mask, (a, b), (c, d), color[i].tolist(), 2)
+
+            frame_1 = cv2.circle(frame_1, (a, b), 5, color[i].tolist(), -1)
+          
+        flow_image = cv2.add(frame_1, mask)
         k = cv2.waitKey(100) & 0xff
 
-        frame_0 = frame_1.copy()
+        # Updating the next frame 
+        frame_0 = frame_1_gray.copy()
+        p0 = good_new.reshape(-1, 1, 2)
 
     # Free up resources and closes all windows
     video_capture.release()
@@ -119,4 +136,4 @@ if __name__ == "__main__":
     args = parse_command_line_arguments()
 
     # Compute the intensity profile 
-    compute_optical_flow_franeback(args)
+    compute_optical_flow_lk(args)
