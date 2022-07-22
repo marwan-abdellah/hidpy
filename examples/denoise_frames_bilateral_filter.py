@@ -19,4 +19,3 @@ bilateral = cv2.bilateralFilter(img, 15, 75, 75)
  
 # Save the output.
 cv2.imwrite('sequence1_bilateral.jpg', bilateral)
-

@@ -11,7 +11,7 @@ import numpy as np
 import cv2 as cv
 
 #cap = cv.VideoCapture(cv.samples.findFile("vtest.avi"))
-cap = cv.VideoCapture(cv.samples.findFile("sequence1.avi"))
+cap = cv.VideoCapture("../data/sequence1/video/sequence1.avi")
 
 
 
