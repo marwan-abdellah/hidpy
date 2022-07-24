@@ -1,8 +1,10 @@
+from pickletools import pylist
 import cv2
 import numpy as np
 import argparse
 import time
 from sys import stdout
+import matplotlib.pyplot as plt
 
 
 ####################################################################################################
@@ -42,7 +44,36 @@ def get_frame(video_capture, frame_number):
         print('Frame [%d] does not exist, NOT grabbed!' % frame_number)
         exit(0)
 
-    
+def plot_quiver(ax, flow, spacing, margin=0, **kwargs):
+    """Plots less dense quiver field.
+
+    Args:
+        ax: Matplotlib axis
+        flow: motion vectors
+        spacing: space (px) between each arrow in grid
+        margin: width (px) of enclosing region without arrows
+        kwargs: quiver kwargs (default: angles="xy", scale_units="xy")
+    """
+    h, w, *_ = flow.shape
+
+    nx = int((w - 2 * margin) / spacing) 
+    ny = int((h - 2 * margin) / spacing)
+
+    x = np.linspace(margin, w - margin - 1, nx, dtype=np.int64)
+    y = np.linspace(margin, h - margin - 1, ny, dtype=np.int64)
+
+    flow = flow[np.ix_(y, x)]
+    u = flow[:, :, 0]
+    v = flow[:, :, 1]
+
+    kwargs = {**dict(angles="xy", scale_units="xy"), **kwargs}
+    ax.quiver(x, y, u, v, **kwargs)
+
+    ax.set_ylim(sorted(ax.get_ylim(), reverse=False))
+    ax.set_aspect("equal")
+    plt.savefig('hola.png')
+
+
 ####################################################################################################
 # @compute_optical_flow_franeback
 ####################################################################################################
@@ -84,7 +115,20 @@ def compute_optical_flow_franeback(args):
         # Calculates dense optical flow by Farneback method
         flow = cv2.calcOpticalFlowFarneback(
             frame_0, frame_1, None, 0.5, 3, 15, 3, 5, 1.2, 0)
+
+
+        delta_x = flow[..., 0]
+        delta_y = flow[..., 1]
+
+        fig, ax = plt.subplots()
+        plot_quiver(ax, flow, spacing=5, scale=1, color="#ff44ff")
         
+
+        exit(0)
+
+
+
+
         # Computes the magnitude and angle of the 2D vectors
         magnitude, angle = cv2.cartToPolar(flow[..., 0], flow[..., 1])
 
@@ -114,6 +158,6 @@ if __name__ == "__main__":
 
     # Parse the command line arguments
     args = parse_command_line_arguments()
-
+    
     # Compute the intensity profile 
     compute_optical_flow_franeback(args)
