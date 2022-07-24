@@ -26,7 +26,8 @@ def get_files_in_directory(directory,
             if i_file.endswith(file_extension):
                 files.append(i_file)
 
-    files = sorted(files) 
+    # Sort to ensure that you get the consequentive frames 
+    files.sort(key = lambda ele : ele[1]) 
 
     # Return the list
     return files
@@ -65,20 +66,19 @@ def parse_command_line_arguments():
 ####################################################################################################
 def compute_optical_flow_hs(args):
 
-    #flist = getimgfiles(stem)
-    flist = get_files_in_directory(args.input_sequence_path, 'bmp')
+    # Get all the images in the directory sorted 
+    file_list = get_files_in_directory(args.input_sequence_path, 'bmp')
     
-    
-    for i in range(len(flist) - 1):
+    for i in range(len(file_list) - 1):
 
         # The first frame         
-        fn1 = '%s/%s' % (args.input_sequence_path, flist[i])
+        fn1 = '%s/%s' % (args.input_sequence_path, file_list[i])
         
         # The image of the first frame 
         im1 = imageio.imread(fn1, as_gray=True)
 
         # The second frame 
-        fn2 = '%s/%s' % (args.input_sequence_path, flist[i + 1])
+        fn2 = '%s/%s' % (args.input_sequence_path, file_list[i + 1])
         
         # The image of the second frame 
         im2 = imageio.imread(fn2, as_gray=True)
@@ -87,7 +87,7 @@ def compute_optical_flow_hs(args):
         U, V = HornSchunck(im1, im2, alpha=1.0, Niter=100)
 
         # Compare the Graphs 
-        compareGraphs(U, V, im2, fn=flist[i + 1])
+        compareGraphs(U, V, im2, fn=file_list[i + 1])
 
     return U, V
 
