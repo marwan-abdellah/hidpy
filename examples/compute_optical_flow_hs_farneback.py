@@ -91,6 +91,7 @@ def compute_optical_flow_franeback(args):
     # Creates an image filled with zero intensities with the same dimensions as the frame
     mask = np.zeros_like(frame_0)
 
+    
     # Sets image saturation to maximum
     mask[..., 1] = 255
 
@@ -106,26 +107,20 @@ def compute_optical_flow_franeback(args):
         frame_1 = get_frame(video_capture=video_capture, frame_number=i)        
         frame_1 = cv2.cvtColor(frame_1, cv2.COLOR_BGR2GRAY)
 
-        cv2.imshow('Input Frame 1', frame_0)
-        k = cv2.waitKey(100) & 0xff
+        #cv2.imshow('Input Frame 1', frame_0)
+        #k = cv2.waitKey(100) & 0xff
 
-        cv2.imshow('Input Frame 2', frame_1)
-        k = cv2.waitKey(100) & 0xff
+        #cv2.imshow('Input Frame 2', frame_1)
+        #k = cv2.waitKey(100) & 0xff
         
         # Calculates dense optical flow by Farneback method
         flow = cv2.calcOpticalFlowFarneback(
             frame_0, frame_1, None, 0.5, 3, 15, 3, 5, 1.2, 0)
 
-
-        delta_x = flow[..., 0]
-        delta_y = flow[..., 1]
-
         fig, ax = plt.subplots()
-        plot_quiver(ax, flow, spacing=5, scale=1, color="#ff44ff")
-        
-
+        plot_quiver(ax, flow, spacing=5, scale=0.05, color="#ff34ff")
+        time.sleep(1)
         exit(0)
-
 
 
 

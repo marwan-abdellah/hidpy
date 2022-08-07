@@ -35,9 +35,6 @@ if __name__ == "__main__":
 
     # Parse the command line arguments
     args = parse_command_line_arguments()
-    
-
-
 
 import numpy as np
 import matplotlib.colors
@@ -47,6 +44,7 @@ import numpy as np
 import matplotlib.colors
 import matplotlib.pyplot as plt
 
+'''
 def vector_to_rgb(angle, absolute):
     """Get the rgb value for the given `angle` and the `absolute` value
 
@@ -95,3 +93,33 @@ fig, ax = plt.subplots()
 q = ax.quiver(X, Y, U, V, color=c)
 
 plt.savefig('sample.png')
+'''
+
+
+
+import numpy as np
+import matplotlib.pyplot as plt
+ 
+ 
+# Creating arrow
+x_pos = 0
+y_pos = 0
+x_direct = 1
+y_direct = 1
+ 
+# Creating plot
+x = np.arange(0,2.2,0.2)
+y = np.arange(0,2.2,0.2)
+
+X, Y = np.meshgrid(x, y)
+u = np.cos(X)*Y
+v = np.sin(y)*Y
+
+fig, ax = plt.subplots(figsize=(7,7))
+ax.quiver(X,Y,u,v)
+
+# Show plot
+plt.show()
+
+
+
