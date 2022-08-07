@@ -74,6 +74,47 @@ def plot_quiver(ax, flow, spacing, margin=0, **kwargs):
     plt.savefig('hola.png')
 
 
+def compute_trajectory(x0, y0, Us, Vs, pixel_size=1):
+
+    x_current = x0 
+    y_current = y0
+
+    trajectory = list()
+
+    # Get the current pixel 
+    for t in range(len(Us)):
+        
+        dx = Us[t][x_current, y_current]
+        dy = Vs[t][x_current, y_current]
+
+        x_new = x_current + dx 
+        y_new = y_current + dy 
+
+
+        #print(x_current, y_current)
+        
+
+
+        x_pixel_new = int(x_new)
+        y_pixel_new = int(y_new)
+
+        #print(dx, dy)
+        #print('----')
+        #sleep(1)
+
+
+        # Add the x_pixel and y_pixel to the list 
+        trajectory.append([x_pixel_new, y_pixel_new])
+
+        x_current = x_pixel_new
+        y_current = y_pixel_new
+
+    #print(trajectory)
+    
+    return trajectory
+
+from PIL import Image 
+
 ####################################################################################################
 # @compute_optical_flow_franeback
 ####################################################################################################
@@ -97,6 +138,12 @@ def compute_optical_flow_franeback(args):
 
     frame_0 = cv2.cvtColor(frame_0, cv2.COLOR_BGR2GRAY)
 
+    im_pil = Image.fromarray(frame_0)
+
+
+    u_arrays = list()
+    v_arrays = list()
+
     # Process the sequence, frame[i] and frame[i + 1]
     for i in range(1, number_frames - 1):
         
@@ -117,10 +164,61 @@ def compute_optical_flow_franeback(args):
         flow = cv2.calcOpticalFlowFarneback(
             frame_0, frame_1, None, 0.5, 3, 15, 3, 5, 1.2, 0)
 
-        fig, ax = plt.subplots()
-        plot_quiver(ax, flow, spacing=5, scale=0.05, color="#ff34ff")
-        time.sleep(1)
-        exit(0)
+
+
+        U = flow[:,:,0]
+        V = flow[:, :, 1]
+
+        u_arrays.append(U)
+        v_arrays.append(V)
+
+    print('computing trajectories')
+
+    trajectories = list()
+    for ii in range(frame_0.shape[0]):
+        print(ii, frame_0.shape[0])
+        for jj in range(frame_0.shape[1]):
+            if frame_0[ii, jj] > 50:
+                trajectories.append(compute_trajectory(ii, jj, u_arrays, v_arrays))
+
+    import random
+    
+    print('sampling')
+    trajectories =random.sample(trajectories, 25)
+
+
+
+    xrgb = im_pil.convert("RGB")
+    xnp = np.array(xrgb)
+
+    
+
+    for i, traj in enumerate(trajectories):
+        print(i, len(trajectories))
+        
+        r = random.randint(0, 255)
+        g = random.randint(0, 255)
+        b = random.randint(0, 255)
+        
+        cv2.circle(xnp, (traj[0][1], traj[0][0]), 2, (r,g,b), 2)
+
+        for kk in range(len(traj) - 1):
+            
+            y0 = traj[kk][0]
+            x0 = traj[kk][1]
+
+            y1 = traj[kk + 1][0]
+            x1 = traj[kk + 1][1]
+
+            
+            cv2.line(xnp, (x0,y0), (x1,y1), (r,g,b), 1)
+        
+    cv2.imwrite('trajectory.png', xnp)
+    '''
+        #fig, ax = plt.subplots()
+        #plot_quiver(ax, flow, spacing=5, scale=0.05, color="#ff34ff")
+        #time.sleep(1)
+        #exit(0)
 
 
 
@@ -144,7 +242,7 @@ def compute_optical_flow_franeback(args):
     # Free up resources and closes all windows
     video_capture.release()
     cv2.destroyAllWindows()
-    
+    '''
 
 ####################################################################################################
 # @Main

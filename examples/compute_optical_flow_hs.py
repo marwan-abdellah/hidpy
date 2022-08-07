@@ -1,5 +1,6 @@
 import os
-from random import random 
+from random import random
+from time import sleep 
 import imageio
 from pathlib import Path
 from matplotlib.pyplot import show
@@ -103,7 +104,7 @@ def plot_quiver(ax, flow, spacing, margin=0, name='image',**kwargs):
     plt.close()
 
 
-def compute_trajectory(x0, y0, Us, Vs):
+def compute_trajectory(x0, y0, Us, Vs, pixel_size=1):
 
     x_current = x0 
     y_current = y0
@@ -116,11 +117,21 @@ def compute_trajectory(x0, y0, Us, Vs):
         dx = Us[t][x_current, y_current]
         dy = Vs[t][x_current, y_current]
 
-        x_new = x_current + dx
-        y_new = y_current + dy
+        x_new = x_current + dx 
+        y_new = y_current + dy 
 
-        x_pixel_new = int(x_new)
-        y_pixel_new = int(y_new)
+
+        #print(x_current, y_current)
+        
+
+
+        x_pixel_new = int(x_new) 
+        y_pixel_new = int(y_new) 
+
+        #print(dx, dy)
+        #print('----')
+        #sleep(1)
+
 
         # Add the x_pixel and y_pixel to the list 
         trajectory.append([x_pixel_new, y_pixel_new])
@@ -131,6 +142,47 @@ def compute_trajectory(x0, y0, Us, Vs):
     #print(trajectory)
     
     return trajectory
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+def verify_flow_frame(frame_0, frame_1, U, V, pixel_width=1):#0.002688172043010753):
+
+    width = frame_0.shape[0]
+    height = frame_0.shape[1]
+
+    for ii in range(width):
+        for jj in range(height):
+
+            x0 = ii
+            y0 = jj
+
+            v0 = frame_0[x0, y0]
+
+            x1 = int(x0 + U[ii, jj] / pixel_width)
+            y1 = int(y0 + V[ii, jj] / pixel_width)
+
+            
+            v1 = frame_1[x0, y0]
+
+            if v0 > 120:
+                print(x0, y0, '', x1, y1, '', v0, v1)
+
+                #print(v0, v1)
+                sleep(0.001)
+
+
 
 
 ####################################################################################################
@@ -147,8 +199,12 @@ def compute_optical_flow_hs(args):
     u_arrays = list()
     v_arrays = list()
 
+    us = list()
+
+
     for i in range(len(file_list) - 1):
 
+        
         # The first frame         
         fn1 = '%s/%s.%s' % (args.input_sequence_path, file_list[i], extension)
         
@@ -180,11 +236,20 @@ def compute_optical_flow_hs(args):
         print(fn1, fn2)
 
         # Run the optical flow method
-        U, V = HornSchunck(im1, im2, alpha=50, Niter=1)
+        U, V = HornSchunck(im1, im2, alpha=0.05, Niter=1)
+
+        #flow = np.dstack((U, V)) 
+        #fig, ax = plt.subplots()
+
+        #pixel_size = 1.0 / frame0.shape[1]
+        #plot_quiver(ax, flow,  spacing=5, margin=1, name=str(i), color="#ff34ff")
 
         u_arrays.append(U)
         v_arrays.append(V)
 
+        verify_flow_frame(im1, im2, U, V)
+
+    
     fn1 = '%s/%s.%s' % (args.input_sequence_path, file_list[0], extension)
     im1_new = Image.new(mode='L', size=(desired_size, desired_size), color='black')
     im1_old = Image.fromarray(np.uint8(im1))
@@ -192,6 +257,7 @@ def compute_optical_flow_hs(args):
     frame0 = np.asarray(im1_new)
     trajectories = list()
 
+    
     for ii in range(frame0.shape[0]):
         for jj in range(frame0.shape[1]):
             if frame0[ii, jj] > 20:
@@ -229,10 +295,11 @@ def compute_optical_flow_hs(args):
             x1 = traj[kk + 1][1]
 
             
-            cv2.line(xnp, (x0,y0),(x1,y1), (r,g,b), 1)
+            cv2.line(xnp, (x0,y0), (x1,y1), (r,g,b), 1)
         
     cv2.imwrite('trajectory.png', xnp)
 
+    
     
 
     exit(0)
@@ -267,7 +334,7 @@ def compute_optical_flow_hs(args):
 
 
 
-    flow = np.dstack((U, V)) 
+    
     print(flow.shape)
 
     fig, ax = plt.subplots()
