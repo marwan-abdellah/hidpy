@@ -6,6 +6,8 @@ import time
 from sys import stdout
 import matplotlib.pyplot as plt
 
+from time import sleep
+
 
 ####################################################################################################
 # @parse_command_line_arguments
@@ -115,6 +117,33 @@ def compute_trajectory(x0, y0, Us, Vs, pixel_size=1):
 
 from PIL import Image 
 
+
+
+def verify_flow_frame(frame_0, frame_1, U, V, pixel_width=1):#0.002688172043010753):
+
+    width = frame_0.shape[0]
+    height = frame_0.shape[1]
+
+    for ii in range(width):
+        for jj in range(height):
+
+            x0 = ii
+            y0 = jj
+
+            v0 = frame_0[x0, y0]
+
+            x1 = int(x0 + U[ii, jj] / pixel_width)
+            y1 = int(y0 + V[ii, jj] / pixel_width)
+
+            
+            v1 = frame_1[x0, y0]
+
+            if v0 > 120:
+                print(x0, y0, '', x1, y1, '', v0, v1)
+
+                #print(v0, v1)
+                sleep(0.001)
+
 ####################################################################################################
 # @compute_optical_flow_franeback
 ####################################################################################################
@@ -164,13 +193,19 @@ def compute_optical_flow_franeback(args):
         flow = cv2.calcOpticalFlowFarneback(
             frame_0, frame_1, None, 0.5, 3, 15, 3, 5, 1.2, 0)
 
-
-
         U = flow[:,:,0]
         V = flow[:, :, 1]
 
         u_arrays.append(U)
         v_arrays.append(V)
+
+
+        #verify_flow_frame(frame_0, frame_1, U, V)
+
+
+        frame_0 = frame_1
+
+        
 
     print('computing trajectories')
 
@@ -178,7 +213,7 @@ def compute_optical_flow_franeback(args):
     for ii in range(frame_0.shape[0]):
         print(ii, frame_0.shape[0])
         for jj in range(frame_0.shape[1]):
-            if frame_0[ii, jj] > 50:
+            if frame_0[ii, jj] > 10:
                 trajectories.append(compute_trajectory(ii, jj, u_arrays, v_arrays))
 
     import random

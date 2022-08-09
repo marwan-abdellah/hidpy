@@ -15,6 +15,7 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from matplotlib.colors import Normalize
 import cv2
+import copy 
 
 
 ####################################################################################################
@@ -72,7 +73,6 @@ def parse_command_line_arguments():
     return parser.parse_args()
 
 
-
 def plot_quiver(ax, flow, spacing, margin=0, name='image',**kwargs):
     """Plots less dense quiver field.
 
@@ -104,7 +104,31 @@ def plot_quiver(ax, flow, spacing, margin=0, name='image',**kwargs):
     plt.close()
 
 
-def compute_trajectory(x0, y0, Us, Vs, pixel_size=1):
+import scipy 
+import time 
+
+
+def compute_interpolated_flow_fields(Us, Vs):
+
+    fUs = list()
+    fVs = list()
+
+    xx = np.arange(Us[0].shape[0])
+    yy = np.arange(Vs[0].shape[1])
+
+    for t in range(len(Us)):
+
+        fu = scipy.interpolate.interp2d(xx, yy, Us[t], kind='cubic')
+        fv = scipy.interpolate.interp2d(xx, yy, Vs[t], kind='cubic')
+
+        fUs.append(fu)
+        fVs.append(fv)
+    
+    return fUs, fVs
+
+
+
+def compute_trajectory(x0, y0, fUs, fVs, pixel_size=1):
 
     x_current = x0 
     y_current = y0
@@ -112,52 +136,33 @@ def compute_trajectory(x0, y0, Us, Vs, pixel_size=1):
     trajectory = list()
 
     # Get the current pixel 
-    for t in range(len(Us)):
+    for t in range(len(fUs)):
         
-        dx = Us[t][x_current, y_current]
-        dy = Vs[t][x_current, y_current]
+        #t0 = time.time()
+        #xx = np.arange(Us[t].shape[0])
+        #yy = np.arange(Vs[t].shape[1])
+        #fu = scipy.interpolate.interp2d(xx, yy, Us[t], kind='cubic')
+        #fv = scipy.interpolate.interp2d(xx, yy, Vs[t], kind='cubic')
 
-        x_new = x_current + dx 
-        y_new = y_current + dy 
-
-
-        #print(x_current, y_current)
+        dx = fUs[t](x_current, y_current)
+        dy = fVs[t](x_current, y_current)
+        #t1 = time.time()
         
+        # dx = Us[t][x_current, y_current]
+        # dy = Vs[t][x_current, y_current]
 
-
-        x_pixel_new = int(x_new) 
-        y_pixel_new = int(y_new) 
-
-        #print(dx, dy)
-        #print('----')
-        #sleep(1)
-
+        x_new = x_current + dx
+        y_new = y_current + dy
 
         # Add the x_pixel and y_pixel to the list 
-        trajectory.append([x_pixel_new, y_pixel_new])
+        trajectory.append([x_new, y_new])
 
-        x_current = x_pixel_new
-        y_current = y_pixel_new
+        x_current = (x_new)
+        y_current = (y_new)
 
-    #print(trajectory)
-    
     return trajectory
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-def verify_flow_frame(frame_0, frame_1, U, V, pixel_width=1):#0.002688172043010753):
+def verify_flow_frame(frame_0, frame_1, U, V, pixel_width=0.002688172043010753):
 
     width = frame_0.shape[0]
     height = frame_0.shape[1]
@@ -170,8 +175,9 @@ def verify_flow_frame(frame_0, frame_1, U, V, pixel_width=1):#0.0026881720430107
 
             v0 = frame_0[x0, y0]
 
-            x1 = int(x0 + U[ii, jj] / pixel_width)
-            y1 = int(y0 + V[ii, jj] / pixel_width)
+            import math
+            x1 = int(x0 + U[ii, jj] + 0.5 * pixel_width)
+            y1 = int(y0 + V[ii, jj] + 0.5 * pixel_width)
 
             
             v1 = frame_1[x0, y0]
@@ -184,6 +190,33 @@ def verify_flow_frame(frame_0, frame_1, U, V, pixel_width=1):#0.0026881720430107
 
 
 
+####################################################################################################
+# @create_numpy_padded_image
+####################################################################################################
+def create_numpy_padded_image(image_path):
+    
+    # Create image object 
+    loaded_image = imageio.imread(image_path, as_gray=True)
+    
+    # Image size 
+    image_size = loaded_image.shape
+    
+    # Make a square image 
+    square_size = image_size[0]
+    if image_size[1] > image_size[0]:
+        square_size = image_size[1]
+    
+    # Ensure that it is even 
+    square_size = square_size if square_size % 2 == 0 else square_size + 1
+    
+    # Create a square image 
+    square_image = Image.new(mode='L', size=(square_size, square_size), color='black')    
+    square_image.paste(Image.fromarray(np.float32(loaded_image)))
+    square_image = np.float32(square_image)
+        
+    # Return the square image 
+    return square_image
+
 
 ####################################################################################################
 # @compute_optical_flow_hs
@@ -195,48 +228,27 @@ def compute_optical_flow_hs(args):
     # Get all the images in the directory sorted 
     file_list = get_files_in_directory(args.input_sequence_path, extension)
 
-
+    # Displacement arrays 
     u_arrays = list()
     v_arrays = list()
 
-    us = list()
-
-
+    # Compute the optical flow frames
     for i in range(len(file_list) - 1):
-
         
         # The first frame         
-        fn1 = '%s/%s.%s' % (args.input_sequence_path, file_list[i], extension)
+        frame1_path = '%s/%s.%s' % (args.input_sequence_path, file_list[i], extension)
+        frame_1 = create_numpy_padded_image(frame1_path)
+
+        # The second frame         
+        frame2_path = '%s/%s.%s' % (args.input_sequence_path, file_list[i + 1], extension)
+        frame_2 = create_numpy_padded_image(frame2_path)
         
-        # The image of the first frame 
-        im1 = imageio.imread(fn1, as_gray=True)
-        old_size = im1.shape
-
-        desired_size = old_size[0]
-        if old_size[1] > old_size[0]:
-            desired_size = old_size[1]
-        
-        im1_new = Image.new(mode='L', size=(desired_size, desired_size), color='black')
-        im1_old = Image.fromarray(np.uint8(im1))
-        im1_new.paste(im1_old)
-
-        # The second frame 
-        fn2 = '%s/%s.%s' % (args.input_sequence_path, file_list[i + 1], extension)
-        
-        # The image of the second frame 
-        im2 = imageio.imread(fn2, as_gray=True)
-        
-        im2_new = Image.new(mode='L', size=(desired_size, desired_size), color='black')
-        im2_old = Image.fromarray(np.uint8(im2))
-        im2_new.paste(im2_old)
-
-        im1 = np.array(im1_new)
-        im2 = np.array(im2_new)
-
-        print(fn1, fn2)
-
         # Run the optical flow method
-        U, V = HornSchunck(im1, im2, alpha=0.05, Niter=1)
+        V, U = HornSchunck(frame_1, frame_2, alpha=0.001, Niter=1)
+
+        # Append the flow fields to the arrays 
+        u_arrays.append(U)
+        v_arrays.append(V)
 
         #flow = np.dstack((U, V)) 
         #fig, ax = plt.subplots()
@@ -244,55 +256,44 @@ def compute_optical_flow_hs(args):
         #pixel_size = 1.0 / frame0.shape[1]
         #plot_quiver(ax, flow,  spacing=5, margin=1, name=str(i), color="#ff34ff")
 
-        u_arrays.append(U)
-        v_arrays.append(V)
+        #verify_flow_frame(im1, im2, U, V)
 
-        verify_flow_frame(im1, im2, U, V)
+    # The first frame         
+    frame1_path = '%s/%s.%s' % (args.input_sequence_path, file_list[i], extension)
+    frame_1 = create_numpy_padded_image(frame1_path)
 
-    
-    fn1 = '%s/%s.%s' % (args.input_sequence_path, file_list[0], extension)
-    im1_new = Image.new(mode='L', size=(desired_size, desired_size), color='black')
-    im1_old = Image.fromarray(np.uint8(im1))
-    im1_new.paste(im1_old)
-    frame0 = np.asarray(im1_new)
+    fUs, fVs = compute_interpolated_flow_fields(u_arrays, v_arrays)
+
     trajectories = list()
+    for ii in range(frame_1.shape[0]):
+        for jj in range(frame_1.shape[1]):
+            if frame_1[ii, jj] > 10:
+                print(ii, jj)
+                trajectories.append(compute_trajectory(ii, jj, fUs, fVs))
 
-    
-    for ii in range(frame0.shape[0]):
-        for jj in range(frame0.shape[1]):
-            if frame0[ii, jj] > 20:
-                trajectories.append(compute_trajectory(ii, jj, u_arrays, v_arrays))
-
-    print(len(trajectories))
 
     import random
+    #trajectories =random.sample(trajectories, 2)
     
-    
-    trajectories =random.sample(trajectories, 25)
-
-
-
-    xrgb = im1_new.convert("RGB")
+    xrgb = Image.fromarray(frame_1).convert("RGB")
     xnp = np.array(xrgb)
-
-    
 
     for i, traj in enumerate(trajectories):
         print(i, len(trajectories))
-        
+
         r = random.randint(0, 255)
         g = random.randint(0, 255)
         b = random.randint(0, 255)
-        
-        cv2.circle(xnp, (traj[0][1], traj[0][0]), 2, (r,g,b), 2)
+
+        cv2.circle(xnp, (int(traj[0][1]), int(traj[0][0])), 1, (r,g,b), 1)
 
         for kk in range(len(traj) - 1):
             
-            y0 = traj[kk][0]
-            x0 = traj[kk][1]
+            y0 = int(traj[kk][0])
+            x0 = int(traj[kk][1])
 
-            y1 = traj[kk + 1][0]
-            x1 = traj[kk + 1][1]
+            y1 = int(traj[kk + 1][0])
+            x1 = int(traj[kk + 1][1])
 
             
             cv2.line(xnp, (x0,y0), (x1,y1), (r,g,b), 1)
@@ -438,6 +439,22 @@ if __name__ == "__main__":
     # Parse the command line arguments
     args = parse_command_line_arguments()
     
+
+    '''
+    from scipy import interpolate
+    x = np.arange(-10, 5.01, 0.01)
+    y = np.arange(-10, 5.01, 0.01)
+    xx, yy = np.meshgrid(x, y)
+    z = np.sin(xx**2+yy**2)
+    f = interpolate.interp2d(x, y, z, kind='cubic')
+    import matplotlib.pyplot as plt
+    xnew = np.arange(-10, 10, 1e-2)
+    ynew = np.arange(-10, 10, 1e-2)
+    znew = f(xnew, ynew)
+    plt.plot(x, z[0, :], 'ro-', xnew, znew[0, :], 'b-')
+    plt.show()
+    '''
+
     # Compute the optical flow using the HS method
     U, V = compute_optical_flow_hs(args)
 
