@@ -173,7 +173,7 @@ def compute_trajectories_parallel(frame, fu_arrays, fv_arrays, pixel_threshold=1
 ####################################################################################################
 def save_trajectories_to_file(trajectories, file_path):
 
-    f = open(file_path, 'w'):
+    f = open(file_path, 'w')
     for i, trajectory in enumerate(trajectories):
         t = '%d ' % i
         for j in trajectory:
