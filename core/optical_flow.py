@@ -3,6 +3,7 @@ import numpy
 from tqdm import tqdm
 from joblib import Parallel, delayed
 
+
 import core.horn_schunck
 
 
@@ -175,11 +176,12 @@ def compute_trajectories_parallel(frame, fu_arrays, fv_arrays, pixel_threshold=1
 def save_trajectories_to_file(trajectories, file_path):
 
     f = open(file_path, 'w')
+    t = ''
     for i, trajectory in enumerate(trajectories):
-        t = '%d ' % i
+        t += '%d [' % i
         for j in trajectory:
-            t += '%f %f, ' % (j[0], j[1])
-        t += '\n'
+            t += '%f,%f ' % (j[0], j[1])
+        t += ']\n'
     f.write(t)
     f.close()
     
