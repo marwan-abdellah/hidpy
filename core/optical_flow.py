@@ -3,7 +3,7 @@ import numpy
 from tqdm import tqdm
 from joblib import Parallel, delayed
 
-from .horn_schunck import HornSchunck
+import core.horn_schunck
 
 
 ####################################################################################################
@@ -58,7 +58,8 @@ def compute_optical_flow_horn_schunck(frames):
     for i in tqdm(range(len(frames) - 1), bar_format='{l_bar}{bar:50}{r_bar}{bar:-50b}'):
 
         # Run the optical flow method
-        U, V = HornSchunck(frames[i], frames[i + 1], alpha=0.001, iterations=1)
+        U, V = core.horn_schunck.compute_optical_flow(
+            frames[i], frames[i + 1], alpha=0.001, iterations=1)
 
         u_arrays.append(U)
         v_arrays.append(V)
