@@ -1,12 +1,7 @@
 import scipy
 import numpy 
 from tqdm import tqdm
-<<<<<<< HEAD
-from .horn_schunck import HornSchunck
-=======
 from joblib import Parallel, delayed
-
-
 import core.horn_schunck
 
 
