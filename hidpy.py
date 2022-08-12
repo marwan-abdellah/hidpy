@@ -67,11 +67,17 @@ if __name__ == "__main__":
     trajectories = optical_flow.compute_trajectories(
         frame=frames[0], fu_arrays=u, fv_arrays=v, pixel_threshold=15)
 
+    print(len(trajectories))
+
     # Plot the trajectories 
     print('Plotting trajectories')
     plotting.plot_trajectories_on_frame(
         frame=frames[0], trajectories=trajectories, 
         output_path='%s/trajectories' % args.output_directory)
+
+    print('Saving the trajectories')
+    optical_flow.save_trajectories_to_file(trajectories=trajectories,
+         file_path='%s/trajectory' % args.output_directory)
 
 
 
