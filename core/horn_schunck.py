@@ -1,86 +1,79 @@
 from __future__ import annotations
 from scipy.signal import convolve2d
-import numpy as np
+import numpy
 
-HORN_SCHUNCK_KERNEL = np.array([
+# The Horn Schunck kernel 
+HORN_SCHUNCK_KERNEL = numpy.array([
     [1 / 12, 1 / 6, 1 / 12], 
     [1 / 6, 0, 1 / 6], 
     [1 / 12, 1 / 6, 1 / 12]], float
 )
 
+# A kernel for computing d/dx
+KERNEL_DX = numpy.array([[-1, 1], [-1, 1]]) * 0.25  
 
-kernelX = np.array([[-1, 1], [-1, 1]]) * 0.25  # kernel for computing d/dx
+# A kernel for computing d/dy
+KERNEL_DY = numpy.array([[-1, -1], [1, 1]]) * 0.25  
 
-kernelY = np.array([[-1, -1], [1, 1]]) * 0.25  # kernel for computing d/dy
+# Computing the differences between frames 
+KERNEL_DT = numpy.ones((2, 2)) * 0.25
 
-kernelT = np.ones((2, 2)) * 0.25
+
+####################################################################################################
+# @compute_derivatives
+####################################################################################################
+def compute_derivatives(frame1: numpy.ndarray, 
+                        frame2: numpy.ndarray) -> \
+                        tuple[numpy.ndarray, numpy.ndarray, numpy.ndarray]:
 
 
-def computeDerivatives(
-    im1: np.ndarray, im2: np.ndarray
-) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    # Compute the derivatives along X and Y
+    fx = convolve2d(frame1, KERNEL_DX, "same") + convolve2d(frame2, KERNEL_DX, "same")
+    fy = convolve2d(frame1, KERNEL_DY, "same") + convolve2d(frame2, KERNEL_DY, "same")
 
-    fx = convolve2d(im1, kernelX, "same") + convolve2d(im2, kernelX, "same")
-    fy = convolve2d(im1, kernelY, "same") + convolve2d(im2, kernelY, "same")
-
-    # ft = im2 - im1
-    ft = convolve2d(im1, kernelT, "same") + convolve2d(im2, -kernelT, "same")
+    # Compute the derivative along the time ft = frame1 - frame2
+    ft = convolve2d(frame1, KERNEL_DT, "same") + convolve2d(frame2, -KERNEL_DT, "same")
 
     return fx, fy, ft
 
-def HornSchunck(
-    im1: np.ndarray, 
-    im2: np.ndarray, *,
-    alpha: float=0.001, 
-    iterations: int=8) -> tuple[np.ndarray, np.ndarray]:
-    """
 
-    Parameters
-    ----------
+####################################################################################################
+# @compute_optical_flow
+####################################################################################################
+def compute_optical_flow(frame1: numpy.ndarray, 
+                         frame2: numpy.ndarray, *,
+                         alpha: float=0.001, 
+                         iterations: int=8) -> \
+                         tuple[numpy.ndarray, numpy.ndarray]:
 
-    im1: numpy.ndarray
-        image at t=0
-    im2: numpy.ndarray
-        image at t=1
-    alpha: float
-        regularization constant
-    Niter: int
-        number of iteration
-    """
-    im1 = im1.astype(np.float32)
-    im2 = im2.astype(np.float32)
+    # Ensure that the frames are of type float 32
+    frame1 = frame1.astype(numpy.float32)
+    frame2 = frame2.astype(numpy.float32)
 
-    # set up initial velocities
-    uInitial = np.zeros([im1.shape[0], im1.shape[1]], dtype=np.float32)
-    vInitial = np.zeros([im1.shape[0], im1.shape[1]], dtype=np.float32)
+    # Set up initial flow fields
+    uInitial = numpy.zeros([frame1.shape[0], frame1.shape[1]], dtype=numpy.float32)
+    vInitial = numpy.zeros([frame1.shape[0], frame1.shape[1]], dtype=numpy.float32)
 
     # Set initial value for the flow vectors
     U = uInitial
     V = vInitial
 
     # Estimate derivatives
-    [fx, fy, ft] = computeDerivatives(im1, im2)
-
-    '''
-    if verbose:
-        from .plots import plotderiv
-        plotderiv(fx, fy, ft)
-    '''
+    [fx, fy, ft] = compute_derivatives(frame1, frame2)
 
     # Iteration to reduce error
-    for _ in range(iterations):
+    for i in range(iterations):
         
-        # %% Compute local averages of the flow vectors
+        # Compute local averages of the flow fields (vectors)
         uAvg = convolve2d(U, HORN_SCHUNCK_KERNEL, "same")
         vAvg = convolve2d(V, HORN_SCHUNCK_KERNEL, "same")
 
-        # %% common part of update step
+        # Common part of the update step
         der = (fx * uAvg + fy * vAvg + ft) / (alpha ** 2 + fx ** 2 + fy ** 2)
         
-        # %% iterative step
+        # Apply an iterative step
         U = uAvg - fx * der
         V = vAvg - fy * der
 
+    # Return the optical flow field as separate numpy arrays along the X and Y directions 
     return U, V
-
-
