@@ -1,3 +1,7 @@
+from __future__ import annotations
+from scipy.signal import convolve2d
+import numpy as np
+
 import os
 from random import random
 from time import sleep 
@@ -5,8 +9,7 @@ import imageio
 from pathlib import Path
 from matplotlib.pyplot import show
 from numpy import angle, arctan2
-from pyoptflow import HornSchunck
-from pyoptflow.plots import compareGraphs
+#from pyoptflow.plots import compareGraphs
 import argparse
 from matplotlib.pyplot import figure, draw, pause, gca
 from PIL import Image, ImageOps
@@ -16,6 +19,94 @@ import matplotlib.cm as cm
 from matplotlib.colors import Normalize
 import cv2
 import copy 
+
+
+
+
+
+
+
+HSKERN = np.array(
+    [[1 / 12, 1 / 6, 1 / 12], 
+    [1 / 6, 0, 1 / 6], 
+    [1 / 12, 1 / 6, 1 / 12]], float
+)
+
+kernelX = np.array([[-1, 1], [-1, 1]]) * 0.25  # kernel for computing d/dx
+
+kernelY = np.array([[-1, -1], [1, 1]]) * 0.25  # kernel for computing d/dy
+
+kernelT = np.ones((2, 2)) * 0.25
+
+
+def computeDerivatives(
+    im1: np.ndarray, im2: np.ndarray
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+
+    fx = convolve2d(im1, kernelX, "same") + convolve2d(im2, kernelX, "same")
+    fy = convolve2d(im1, kernelY, "same") + convolve2d(im2, kernelY, "same")
+
+    # ft = im2 - im1
+    ft = convolve2d(im1, kernelT, "same") + convolve2d(im2, -kernelT, "same")
+
+    return fx, fy, ft
+
+def HornSchunck(
+    im1: np.ndarray,
+    im2: np.ndarray,
+    *,
+    alpha: float = 0.001,
+    Niter: int = 8,
+    verbose: bool = False
+) -> tuple[np.ndarray, np.ndarray]:
+    """
+
+    Parameters
+    ----------
+
+    im1: numpy.ndarray
+        image at t=0
+    im2: numpy.ndarray
+        image at t=1
+    alpha: float
+        regularization constant
+    Niter: int
+        number of iteration
+    """
+    im1 = im1.astype(np.float32)
+    im2 = im2.astype(np.float32)
+
+    # set up initial velocities
+    uInitial = np.zeros([im1.shape[0], im1.shape[1]], dtype=np.float32)
+    vInitial = np.zeros([im1.shape[0], im1.shape[1]], dtype=np.float32)
+
+    # Set initial value for the flow vectors
+    U = uInitial
+    V = vInitial
+
+    # Estimate derivatives
+    [fx, fy, ft] = computeDerivatives(im1, im2)
+
+    '''
+    if verbose:
+        from .plots import plotderiv
+        plotderiv(fx, fy, ft)
+    '''
+
+    # Iteration to reduce error
+    for _ in range(Niter):
+        # %% Compute local averages of the flow vectors
+        uAvg = convolve2d(U, HSKERN, "same")
+        vAvg = convolve2d(V, HSKERN, "same")
+        # %% common part of update step
+        der = (fx * uAvg + fy * vAvg + ft) / (alpha ** 2 + fx ** 2 + fy ** 2)
+        # %% iterative step
+        U = uAvg - fx * der
+        V = vAvg - fy * der
+
+    return U, V
+
+
 
 
 ####################################################################################################
@@ -127,8 +218,7 @@ def compute_interpolated_flow_fields(Us, Vs):
     return fUs, fVs
 
 
-
-def compute_trajectory(x0, y0, fUs, fVs, pixel_size=1):
+def compute_trajectory(x0, y0, fUs, fVs):
 
     x_current = x0 
     y_current = y0
@@ -161,33 +251,6 @@ def compute_trajectory(x0, y0, fUs, fVs, pixel_size=1):
         y_current = (y_new)
 
     return trajectory
-
-def verify_flow_frame(frame_0, frame_1, U, V, pixel_width=0.002688172043010753):
-
-    width = frame_0.shape[0]
-    height = frame_0.shape[1]
-
-    for ii in range(width):
-        for jj in range(height):
-
-            x0 = ii
-            y0 = jj
-
-            v0 = frame_0[x0, y0]
-
-            import math
-            x1 = int(x0 + U[ii, jj] + 0.5 * pixel_width)
-            y1 = int(y0 + V[ii, jj] + 0.5 * pixel_width)
-
-            
-            v1 = frame_1[x0, y0]
-
-            if v0 > 120:
-                print(x0, y0, '', x1, y1, '', v0, v1)
-
-                #print(v0, v1)
-                sleep(0.001)
-
 
 
 ####################################################################################################
@@ -267,13 +330,13 @@ def compute_optical_flow_hs(args):
     trajectories = list()
     for ii in range(frame_1.shape[0]):
         for jj in range(frame_1.shape[1]):
-            if frame_1[ii, jj] > 10:
+            if frame_1[ii, jj] > 15:
                 print(ii, jj)
                 trajectories.append(compute_trajectory(ii, jj, fUs, fVs))
 
 
     import random
-    #trajectories =random.sample(trajectories, 2)
+    #trajectories =random.sample(trajectories, 1)
     
     xrgb = Image.fromarray(frame_1).convert("RGB")
     xnp = np.array(xrgb)
