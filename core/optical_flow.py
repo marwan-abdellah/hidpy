@@ -177,7 +177,7 @@ def save_trajectories_to_file(trajectories, file_path):
     for i, trajectory in enumerate(trajectories):
         t = '%d ' % i
         for j in trajectory:
-            t += '%f ' % j
+            t += '%f %f, ' % (j[0], j[1])
         t += '\n'
     f.write(t)
     f.close()
