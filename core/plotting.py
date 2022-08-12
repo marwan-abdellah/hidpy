@@ -56,7 +56,7 @@ def plot_trajectories(size, trajectories, output_path):
     np_image = numpy.array(rgb_image)
 
     # Draw each trajectory 
-    for _, traj in enumerate(trajectories):
+    for i, trajectory in enumerate(trajectories):
         
         # Create random colors 
         r = random.randint(0, 255)
@@ -67,15 +67,15 @@ def plot_trajectories(size, trajectories, output_path):
         cv2.circle(np_image, (int(traj[0][1]), int(traj[0][0])), 1, (r,g,b), 1)
 
         # The rest of the trajectory 
-        for kk in range(len(traj) - 1):
+        for kk in range(len(trajectory) - 1):
             
             # First point 
-            y0 = int(traj[kk][0])
-            x0 = int(traj[kk][1])
+            y0 = int(trajectory[kk][0])
+            x0 = int(trajectory[kk][1])
 
             # Last point 
-            y1 = int(traj[kk + 1][0])
-            x1 = int(traj[kk + 1][1])
+            y1 = int(trajectory[kk + 1][0])
+            x1 = int(trajectory[kk + 1][1])
 
             # Create the line 
             cv2.line(np_image, (x0,y0), (x1,y1), (r,g,b), 1)
