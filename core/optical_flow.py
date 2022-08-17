@@ -75,9 +75,13 @@ def compute_trajectory(x0, y0, fu_arrays, fv_arrays):
     # A list containing the trajectories 
     trajectory = list()
 
+    # Initially, add the first pixel 
+    trajectory.append([x0, y0])
+
     # Initially, the current pixel is the seed where the trajectory is starting 
     x_current = x0 
     y_current = y0
+
 
     # For every time-frame 
     for t in range(len(fu_arrays)):
