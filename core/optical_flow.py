@@ -3,6 +3,7 @@ import numpy
 from tqdm import tqdm
 from joblib import Parallel, delayed
 import core.horn_schunck
+import core.farneback
 
 
 ####################################################################################################
@@ -68,6 +69,28 @@ def compute_optical_flow_horn_schunck(frames):
 
 
 ####################################################################################################
+# @compute_optical_flow_farneback
+####################################################################################################
+def compute_optical_flow_farneback(frames):
+
+    # Displacement map arrays  
+    u_arrays = list()
+    v_arrays = list()
+
+    # Each flow map is computed from two frames 
+    for i in tqdm(range(len(frames) - 1), bar_format='{l_bar}{bar:50}{r_bar}{bar:-50b}'):
+
+        # Run the optical flow method
+        U, V = core.farneback.compute_optical_flow(frames[i], frames[i + 1])
+
+        u_arrays.append(U)
+        v_arrays.append(V)
+
+    # Return the Displacement maps 
+    return u_arrays, v_arrays
+
+
+####################################################################################################
 # @compute_trajectory
 ####################################################################################################
 def compute_trajectory(x0, y0, fu_arrays, fv_arrays):
@@ -81,7 +104,6 @@ def compute_trajectory(x0, y0, fu_arrays, fv_arrays):
     # Initially, the current pixel is the seed where the trajectory is starting 
     x_current = x0 
     y_current = y0
-
 
     # For every time-frame 
     for t in range(len(fu_arrays)):

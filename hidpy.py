@@ -56,7 +56,7 @@ if __name__ == "__main__":
 
     # Compute the optical flow
     print('Computing optical flow') 
-    u, v = optical_flow.compute_optical_flow_horn_schunck(frames=frames)
+    u, v = optical_flow.compute_optical_flow_farneback(frames=frames)
 
     # Interpolate the flow field
     print('Computing interpolations')
