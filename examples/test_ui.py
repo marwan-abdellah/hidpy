@@ -3,13 +3,13 @@ import sys
 
 from PySide6.QtCore import Qt, Slot
 from PySide6.QtWidgets import (QApplication, QLabel, QPushButton,
-                               QVBoxLayout, QWidget)
+                               QVBoxLayout, QWidget, QMainWindow)
 from __feature__ import snake_case, true_property
 
 
-class MyWidget(QWidget):
+class MyWindow(QMainWindow):
     def __init__(self):
-        QWidget.__init__(self)
+        QMainWindow.__init__(self)
 
         self.hello = [
             "Hallo",
@@ -37,7 +37,10 @@ class MyWidget(QWidget):
 if __name__ == "__main__":
     app = QApplication(sys.argv)
 
-    widget = MyWidget()
-    widget.show()
+    window = MyWindow()
+    window.show()
+
+    #widget = MyWidget()
+    #widget.show()
 
     sys.exit(app.exec_())
