@@ -122,16 +122,15 @@ def MSDBayes(MSD, dT,models_selected):
 
     
 def func(MSD,i,yx_coords,timelags,msd_params):
+    nh = 1
+        
+    coord=yx_coords[i,:]
+    row=coord[0]+1
+    col=coord[1]+1
+    results={}
 
     try:
-        nh = 1
-        
-        coord=yx_coords[i,:]
-        row=coord[0]+1
-        col=coord[1]+1
-
-        results={}
-                    
+                        
         # get 3x3 neighborhood around central pixel
         if (row-1 - nh) < 0:
             xs = row-1
