@@ -1,5 +1,6 @@
 import scipy
 import numpy 
+import time
 from tqdm import tqdm
 from joblib import Parallel, delayed
 import core.horn_schunck
@@ -11,8 +12,8 @@ import core.farneback
 ####################################################################################################
 def interpolate_flow_field(x, y, u, v, kind='cubic'):
 
-    fu = scipy.interpolate.interp2d(x, y, u[t], kind='cubic')
-    fv = scipy.interpolate.interp2d(y, y, v[t], kind='cubic')
+    fu = scipy.interpolate.interp2d(x, y, u, kind='cubic')
+    fv = scipy.interpolate.interp2d(y, y, v, kind='cubic')
 
     return fu, fv
 
@@ -69,25 +70,58 @@ def compute_optical_flow_horn_schunck(frames):
 
 
 ####################################################################################################
+# @compute_optical_flow_farneback_kernel
+####################################################################################################
+def compute_optical_flow_farneback_kernel(frames, u_arrays, v_arrays, index):
+
+    U, V = core.farneback.compute_optical_flow(frames[index], frames[index + 1])
+    
+    u_arrays[index] = U
+    v_arrays[index] = V
+    
+
+####################################################################################################
 # @compute_optical_flow_farneback
 ####################################################################################################
-def compute_optical_flow_farneback(frames):
+def compute_optical_flow_farneback(frames, parallel=False):
 
-    # Displacement map arrays  
-    u_arrays = list()
-    v_arrays = list()
+    if parallel:
+        
+        start = time.time()
 
-    # Each flow map is computed from two frames 
-    for i in tqdm(range(len(frames) - 1), bar_format='{l_bar}{bar:50}{r_bar}{bar:-50b}'):
+        # Displacement map arrays  
+        u_arrays = [None] * (len(frames) - 1)
+        v_arrays = [None] * (len(frames) - 1)
 
-        # Run the optical flow method
-        U, V = core.farneback.compute_optical_flow(frames[i], frames[i + 1])
+        result = Parallel(n_jobs=1)(delayed(compute_optical_flow_farneback_kernel)(frames, u_arrays, v_arrays, i)
+                for i in range(len(frames) - 1))
 
-        u_arrays.append(U)
-        v_arrays.append(V)
+        print('Optical flow time %f' % (time.time() - start))
 
-    # Return the Displacement maps 
-    return u_arrays, v_arrays
+        # Return the Displacement maps 
+        return u_arrays, v_arrays
+
+    else:
+
+        # Displacement map arrays  
+        u_arrays = list()
+        v_arrays = list()
+
+        start = time.time()
+
+        # Each flow map is computed from two frames 
+        for i in tqdm(range(len(frames) - 1), bar_format='{l_bar}{bar:50}{r_bar}{bar:-50b}'):
+
+            # Run the optical flow method
+            U, V = core.farneback.compute_optical_flow(frames[i], frames[i + 1])
+
+            u_arrays.append(U)
+            v_arrays.append(V)
+
+        print('Optical flow time %f' % (time.time() - start))
+
+        # Return the Displacement maps 
+        return u_arrays, v_arrays
 
 
 ####################################################################################################
@@ -166,17 +200,34 @@ def compute_trajectory_kernel(frame, x0, y0, fu_arrays, fv_arrays, pixel_thresho
 ####################################################################################################
 # @compute_trajectories
 ####################################################################################################
-def compute_trajectories(frame, fu_arrays, fv_arrays, pixel_threshold=15):
+def compute_trajectories(frame, fu_arrays, fv_arrays, pixel_threshold=15, parallel=False):
 
-    # A list containing all the trajectories 
-    trajectories = list()
-    for ii in tqdm(range(frame.shape[0]), bar_format='{l_bar}{bar:50}{r_bar}{bar:-50b}'):
-        for jj in range(frame.shape[1]):
-            if frame[ii, jj] > pixel_threshold:
-                trajectories.append(compute_trajectory(ii, jj, fu_arrays, fv_arrays))
+    if parallel:
 
-    # Return a reference to the trajectories list 
-    return trajectories
+         # A list containing all the trajectories 
+        trajectories = list()
+
+        for ii in tqdm(range(frame.shape[0]), bar_format='{l_bar}{bar:50}{r_bar}{bar:-50b}'):
+            
+            iteration_result = Parallel(n_jobs=4)(delayed(
+                compute_trajectory_kernel)(frame, ii, jj, fu_arrays, fv_arrays, pixel_threshold) 
+                    for jj in range(frame.shape[1]))
+            trajectories.extend([x for x in iteration_result if x])
+    
+        # Return a reference to the trajectories list 
+        return trajectories
+
+    else:
+
+        # A list containing all the trajectories 
+        trajectories = list()
+        for ii in tqdm(range(frame.shape[0]), bar_format='{l_bar}{bar:50}{r_bar}{bar:-50b}'):
+            for jj in range(frame.shape[1]):
+                if frame[ii, jj] > pixel_threshold:
+                    trajectories.append(compute_trajectory(ii, jj, fu_arrays, fv_arrays))
+
+        # Return a reference to the trajectories list 
+        return trajectories
 
 
 ####################################################################################################
