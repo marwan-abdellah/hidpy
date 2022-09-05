@@ -34,10 +34,27 @@ class MyWindow(QMainWindow):
         self.message.text = random.choice(self.hello)
 
 
+class MainWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+
+        self.setWindowTitle("My App")
+
+        button = QPushButton("Press Me!")
+        button.setCheckable(True)
+        button.clicked.connect(self.the_button_was_clicked)
+
+        # Set the central widget of the Window.
+        self.setCentralWidget(button)
+
+    def the_button_was_clicked(self):
+        print("Clicked!")
+
+
 if __name__ == "__main__":
     app = QApplication(sys.argv)
 
-    window = MyWindow()
+    window = MainWindow()
     window.show()
 
     #widget = MyWidget()
