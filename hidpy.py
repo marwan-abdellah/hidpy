@@ -5,6 +5,8 @@ import argparse
 from core import optical_flow
 from core import video_processing
 from core import plotting
+from MSD_Bayes_Python import MSDimports
+from MSD_Bayes_Python import MSDBayesimports
 
 
 ####################################################################################################
@@ -76,6 +78,20 @@ if __name__ == "__main__":
     print('Saving the trajectories')
     optical_flow.save_trajectories_to_file(trajectories=trajectories,
          file_path='%s/trajectory' % args.output_directory)
+    
+    # construct trajectory map
+    xp, yp = MSDimports.convert_trajectories_to_map(trajectories, (len(frames), frames[0].shape[0], frames[0].shape[1]))
+
+    # extract nucleoli mask
+    mask_nuc = MSDimports.extract_nucleoli_map(xp, yp)
+
+    # compute the MSDs
+    MSD = MSDimports.MSDcalculation(xp, yp, mask_nuc)
+
+    # Baysian fit on MSDs
+    models_selected = ['D','DA','V','DV','DAV'] ### this should be specified by the user in the config file
+    dT = 0.1 ### this should be specified by the user in the config file
+    Bayes = MSDBayesimports.MSDBayes(MSD, dT, models_selected)
 
 
 

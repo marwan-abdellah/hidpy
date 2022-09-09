@@ -1,6 +1,6 @@
 import numpy as np
 from tqdm import tqdm
-import msd_curves_bayesimports
+from MSD_Bayes_Python import msd_curves_bayesimports
 import numpy.matlib
 import multiprocessing
 
