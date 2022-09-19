@@ -47,31 +47,38 @@ class MainWindow(QMainWindow):
 
         # Input parameters area 
         self.parameters_area = QVBoxLayout()
-        self.l1 = QLabel('Parameters')
+        self.l1 = QLabel('Input Sequence')
         self.parameters_area.addWidget(self.l1)
-
-
-
-
-        self.vbox.addLayout(self.parameters_area)
         
-        self.output_area = QVBoxLayout()
-        self.batchbutton = QPushButton('Start batch',self)
-        self.longbutton = QPushButton('Start long (10 seconds) operation',self)
-        self.label1 = QLabel('Continuos batch')
-        self.label2 = QLabel('Long batch')
+        self.vbox.addLayout(self.parameters_area)
 
+        self.output_area = QVBoxLayout()
+        self.batchbutton = QPushButton('Load Sequence',self)
+        self.longbutton = QPushButton('Run Analysis',self)
+        self.label1 = QLabel('')
+        self.label2 = QLabel('Add Input Values')
+        
 
         self.lineedit = QLineEdit(parent=self)
 
         self.image = QImage('/projects/hidpy/output/trajectories.png')
 
         self.output_area.addWidget(self.batchbutton)
-        self.output_area.addWidget(self.longbutton)
+        
         self.output_area.addWidget(self.label1)
         self.output_area.addWidget(self.label2)
-        self.output_area.addWidget(self.lineedit)
+
         
+
+        self.l1 = QLabel('Parameter 1')
+        self.output_area.addWidget(self.l1)
+        self.output_area.addWidget(self.lineedit)
+
+        self.output_area.addWidget(self.longbutton)
+        
+        
+        self.lx = QLabel('Output Area')
+        self.output_area.addWidget(self.lx)
 
         self.image_label = QLabel(" ")
         self.image_label.setPixmap(QPixmap.fromImage(self.image))
