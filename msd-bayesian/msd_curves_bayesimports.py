@@ -1,5 +1,5 @@
 import numpy as np
-from MSD_Bayes_Python import msd_fittingimports
+import msd_fittingimports
 
 
 def cov_shrinkage(M,target): 
