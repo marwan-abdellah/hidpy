@@ -75,7 +75,9 @@ def get_videos_list(path):
 ####################################################################################################
 def veryify_input_options(video_sequence, 
                           output_directory, 
-                          pixel_threshold):
+                          pixel_threshold,
+                          pixel_size,
+                          dt):
 
     # Verification if the video file exists 
     if not os.path.exists(video_sequence):
