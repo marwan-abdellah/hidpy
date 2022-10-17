@@ -92,32 +92,3 @@ if __name__ == "__main__":
     models_selected = ['D','DA','V','DV','DAV'] ### this should be specified by the user in the config file
     dT = 0.1 ### this should be specified by the user in the config file
     Bayes = MSDBayesimports.MSDBayes(MSD, dT, models_selected)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    '''
-    dataset = Image.open(arguments.input_sequence)
-    
-    h,w = np.shape(dataset)
-    tiffarray = np.zeros((h,w,dataset.n_frames))
-    for i in range(dataset.n_frames):
-        dataset.seek(i)
-        tiffarray[:,:,i] = np.array(dataset)
-        expim = tiffarray.astype(np.double)
-    print(expim.shape)
-    '''

@@ -4,3 +4,6 @@ from .file_utils import *
 from .optical_flow import * 
 from .horn_schunck import * 
 from .farneback import *
+#from .fit import *
+from .msd import *
+#from .inference import *

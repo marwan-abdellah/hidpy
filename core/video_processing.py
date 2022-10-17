@@ -100,10 +100,10 @@ def get_frames_list_from_video(video_path,
 
     # Print the video details 
     if verbose:
-        string = "Video Details: \n"
-        string += "  * Name: %s \n" % video_path
-        string += "  * Number Frames %d \n" % number_frames 
-        string += "  * FPS: %f \n" % float(fps)
+        string = "\t* Video Details: \n"
+        string += "  \t* Name: %s \n" % video_path
+        string += "  \t* Number Frames %d" % number_frames 
+        string += "  \t* FPS: %f" % float(fps)
         print(string)
 
     # Save the frames to a list 
@@ -113,4 +113,3 @@ def get_frames_list_from_video(video_path,
     
     # Return the list 
     return frames
-    
