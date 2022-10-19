@@ -1,5 +1,5 @@
-import applyGMM_functions
-import applyGMMconstrained_fitout_functions
+from deconvolution import applyGMM_functions
+from deconvolution  import applyGMMconstrained_fitout_functions
 import numpy as np
 import pickle
 from tqdm import tqdm
@@ -26,7 +26,7 @@ def applyGMM_Multiple(listdir,parameters2decon,numDist):
         for parameter2analyse in parameters2decon:
             HiD_parameter=Bayes1[parameter2analyse]            
             HiD_parameter[np.where(np.isnan(HiD_parameter))]=0
-            index=np.where(HiD_parameter>0)
+            index=np.where(HiD_parameter>1e-10)
             A = np.squeeze(np.asarray(HiD_parameter[index]))
             A=np.random.choice(A,2000)                                 # use to reduce the data to fit
             GMM_input = A.reshape(-1, 1)          
@@ -56,7 +56,7 @@ def applyGMMconstrained_dir(listdir,parameters2decon,DistributionType,numDist):
         for parameter2analyse in parameters2decon:
             HiD_parameter=Bayes1[parameter2analyse]            
             HiD_parameter[np.where(np.isnan(HiD_parameter))]=0
-            index=np.where(HiD_parameter>0)
+            index=np.where(HiD_parameter>1e-10)
             A = np.squeeze(np.asarray(HiD_parameter[index]))
             GMM_input = A.reshape(-1, 1)          
             outmat=applyGMMconstrained_fitout_functions.applyGMMfun(GMM_input,DistributionType[count2],numDist[count2])
@@ -89,7 +89,7 @@ def generateplots_TestGMM(pathBayesCells_Plots,BayesMat,parameters2decon,nbins,s
 
             xdata=BayesMat[i][parameter2analyse].reshape(-1, 1)
             xdata[np.where(np.isnan(xdata))]=0
-            xdata=xdata[np.where(xdata>0)]
+            xdata=xdata[np.where(xdata>1e-10)]
 
             n,bins,patches=axs[count3].hist(xdata, edgecolor='c', color='c', density=True, bins=nbins, alpha=0.3);
             x=arange(min(bins),max(bins),bins[1]-bins[0])
@@ -151,7 +151,6 @@ def generatetable_TestGMM(pathBayesCells,BayesMat,parameters2decon):
     
     maxPop=int(max(PopMat))
     
-    #column_labels=['1','2','3']
     column_labels = [str(x) for x in range(1,maxPop+1,1)]
 
     fig, ax = plt.subplots(len(parameters2decon))
@@ -181,10 +180,11 @@ def generatetable_TestGMM(pathBayesCells,BayesMat,parameters2decon):
             table[row,col]=table[row,col]+1
 
         table=table/tot 
+        table=np.around(table,decimals=3)
 
         df= pd.DataFrame(table,index=row_labels,columns=column_labels)
         df2[j]=pd.concat([pd.concat([df],keys=['number_populations'], axis=1)], keys=['Dist_Type'])
-        df2[j].to_csv(pathBayesCells+'Results_GMM_Multiple.csv', mode='a')
+        df2[j].to_csv(pathBayesCells+'Results_GMM_Multiple.csv', mode='a')        
 
         ax[j].table(cellText = df2[j].values,rowLabels = df2[j].index,colLabels = df2[j].columns,loc = "center")
         ax[j].set_title(parameters2decon[j])
@@ -211,7 +211,7 @@ def generateplots_GMMconstrained_fitout(pathBayesCells_Plots,BayesMat,parameters
 
             xdata=BayesMat[i][parameter2analyse].reshape(-1, 1)
             xdata[np.where(np.isnan(xdata))]=0
-            xdata=xdata[np.where(xdata>0)]
+            xdata=xdata[np.where(xdata>1e-10)]
 
             n,bins,patches=axs[count3].hist(xdata, edgecolor='c', color='c', density=True, bins=nbins, alpha=0.3);
             x=arange(min(bins),max(bins),bins[1]-bins[0])
