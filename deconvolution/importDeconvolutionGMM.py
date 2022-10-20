@@ -10,6 +10,50 @@ from matplotlib import pyplot as plt
 from scipy.stats import iqr
 from matplotlib import colors
 
+import seaborn
+from matplotlib import pyplot
+import matplotlib.pyplot as pyplot
+import matplotlib.font_manager as font_manager
+from matplotlib.ticker import FuncFormatter
+
+"""
+font_size = 10
+seaborn.set_style("whitegrid")
+pyplot.rcParams['axes.grid'] = 'True'
+pyplot.rcParams['grid.linestyle'] = '--'
+pyplot.rcParams['grid.linewidth'] = 1.0
+pyplot.rcParams['grid.color'] = 'gray'
+pyplot.rcParams['grid.alpha'] = 0.25
+pyplot.rcParams['font.family'] = 'Helvetica LT Std'
+pyplot.rcParams['font.family'] = 'NimbusSanL'
+pyplot.rcParams['font.monospace'] = 'Regular'
+pyplot.rcParams['font.style'] = 'normal'
+pyplot.rcParams['axes.labelweight'] = 'light'
+pyplot.rcParams['axes.linewidth'] = 1.0
+pyplot.rcParams['axes.labelsize'] = font_size
+pyplot.rcParams['xtick.labelsize'] = font_size
+pyplot.rcParams['ytick.labelsize'] = font_size
+pyplot.rcParams['legend.fontsize'] = font_size
+pyplot.rcParams['figure.titlesize'] = font_size
+pyplot.rcParams['axes.titlesize'] = font_size
+pyplot.rcParams['xtick.major.pad'] = '10'
+pyplot.rcParams['ytick.major.pad'] = '0'
+pyplot.rcParams['axes.edgecolor'] = '1'
+"""
+
+
+####################################################################################################
+# @verify_plotting_packages
+####################################################################################################
+def verify_plotting_packages():
+
+    # Import the fonts
+    font_dirs = ['/projects/hidpy/fonts']
+    # font_dirs .extend([os.path.dirname(os.path.realpath(__file__)) + '/../fonts/'])
+    font_files = font_manager.findSystemFonts(fontpaths=font_dirs)
+    for font_file in font_files:
+        font_manager.fontManager.addfont(font_file)
+
 
 def applyGMM_Multiple(listdir,parameters2decon,numDist):
     BayesMat={}
@@ -71,6 +115,31 @@ def applyGMMconstrained_dir(listdir,parameters2decon,DistributionType,numDist):
     return BayesMat
 
 def generateplots_TestGMM(pathBayesCells_Plots,BayesMat,parameters2decon,nbins,showplots):
+
+    verify_plotting_packages()
+    
+    font_size = 10
+    seaborn.set_style("whitegrid")
+    pyplot.rcParams['axes.grid'] = 'True'
+    pyplot.rcParams['grid.linestyle'] = '--'
+    pyplot.rcParams['grid.linewidth'] = 1.0
+    pyplot.rcParams['grid.color'] = 'gray'
+    pyplot.rcParams['grid.alpha'] = 0.25
+    pyplot.rcParams['font.family'] = 'Helvetica LT Std'
+    pyplot.rcParams['font.family'] = 'NimbusSanL'
+    pyplot.rcParams['font.monospace'] = 'Regular'
+    pyplot.rcParams['font.style'] = 'normal'
+    pyplot.rcParams['axes.labelweight'] = 'light'
+    pyplot.rcParams['axes.linewidth'] = 1.0
+    pyplot.rcParams['axes.labelsize'] = font_size
+    pyplot.rcParams['xtick.labelsize'] = font_size
+    pyplot.rcParams['ytick.labelsize'] = font_size
+    pyplot.rcParams['legend.fontsize'] = font_size
+    pyplot.rcParams['figure.titlesize'] = font_size
+    pyplot.rcParams['axes.titlesize'] = font_size
+    pyplot.rcParams['xtick.major.pad'] = '10'
+    pyplot.rcParams['ytick.major.pad'] = '0'
+    pyplot.rcParams['axes.edgecolor'] = '1'
 
     for i in tqdm(range(len(BayesMat))):
 
@@ -194,6 +263,33 @@ def generatetable_TestGMM(pathBayesCells,BayesMat,parameters2decon):
 
 def generateplots_GMMconstrained_fitout(pathBayesCells_Plots,BayesMat,parameters2decon,nbins,Sel_DistributionType,Sel_numDist,showplots):
 
+    print('Verify Package!')
+
+    verify_plotting_packages()
+
+    font_size = 10
+    seaborn.set_style("whitegrid")
+    pyplot.rcParams['axes.grid'] = 'False'
+    pyplot.rcParams['grid.linestyle'] = '--'
+    pyplot.rcParams['grid.linewidth'] = 1.0
+    pyplot.rcParams['grid.color'] = 'gray'
+    pyplot.rcParams['grid.alpha'] = 0.25
+    pyplot.rcParams['font.family'] = 'Helvetica LT Std'
+    pyplot.rcParams['font.family'] = 'NimbusSanL'
+    pyplot.rcParams['font.monospace'] = 'Regular'
+    pyplot.rcParams['font.style'] = 'normal'
+    pyplot.rcParams['axes.labelweight'] = 'light'
+    pyplot.rcParams['axes.linewidth'] = 1.0
+    pyplot.rcParams['axes.labelsize'] = font_size
+    pyplot.rcParams['xtick.labelsize'] = font_size
+    pyplot.rcParams['ytick.labelsize'] = font_size
+    pyplot.rcParams['legend.fontsize'] = font_size
+    pyplot.rcParams['figure.titlesize'] = font_size
+    pyplot.rcParams['axes.titlesize'] = font_size
+    pyplot.rcParams['xtick.major.pad'] = '10'
+    pyplot.rcParams['ytick.major.pad'] = '0'
+    pyplot.rcParams['axes.edgecolor'] = '1'
+
     for i in tqdm(range(len(BayesMat))):
 
         filename=BayesMat[i]['filename']
@@ -259,6 +355,10 @@ def generateplots_GMMconstrained_fitout(pathBayesCells_Plots,BayesMat,parameters
 
 def generate_plots_stats_decon(BayesMatSel,param,pathBayesCells_Populations_Plots,showplots):
 
+    print('Verify Package!')
+
+    verify_plotting_packages()
+    
     bounds = [0.5, 1.5, 2.5, 3.5, 4.5]
 
     labels = BayesMatSel['Deconvolution'][param]['labels']

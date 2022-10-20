@@ -1,7 +1,26 @@
 import numpy 
 import random 
 import cv2
-from PIL import Image 
+import os
+from PIL import Image
+from matplotlib import pyplot 
+from matplotlib import pyplot
+import matplotlib.pyplot as pyplot
+import matplotlib.font_manager as font_manager
+from matplotlib.ticker import FuncFormatter
+import seaborn
+
+####################################################################################################
+# @verify_plotting_packages
+####################################################################################################
+def verify_plotting_packages():
+
+    # Import the fonts
+    font_dirs = list()
+    font_dirs.extend([os.path.dirname(os.path.realpath(__file__)) + '/../fonts/'])
+    font_files = font_manager.findSystemFonts(fontpaths=font_dirs)
+    for font_file in font_files:
+        font_manager.fontManager.addfont(font_file)
 
 
 ####################################################################################################
@@ -83,3 +102,17 @@ def plot_trajectories(size, trajectories, output_path):
     
     # Save the trajectory image 
     cv2.imwrite('%s.png' % output_path, np_image)
+
+
+def plot_frame(frame, output_directory, frame_prefix):
+
+    verify_plotting_packages()
+    
+
+
+    fig, ax = pyplot.subplots()
+    ax.imshow(frame)
+    pyplot.savefig('/projects/hidpy/output2/xx.png', dpi=300, bbox_inches='tight')
+
+    pass 
+
