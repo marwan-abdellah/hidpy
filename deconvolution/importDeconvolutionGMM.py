@@ -172,14 +172,14 @@ def generateplots_TestGMM(pathBayesCells_Plots,BayesMat, parameters,nbins,showpl
     for i in tqdm(range(len(BayesMat))):
         
 
-        colors = ['r', 'g', 'b']
+        
         # Get the file name 
         file_name = BayesMat[i]['filename']
         
         # File name without extension 
         filename_without_ext = os.path.splitext(file_name)[0]
 
-        
+        colors = ['r', 'g', 'b']
         figure_width = 8
         figure_height = 3
         # Create the new plot 
@@ -359,12 +359,18 @@ def generateplots_GMMconstrained_fitout(pathBayesCells_Plots,BayesMat,parameters
     pyplot.rcParams['ytick.major.pad'] = '0'
     pyplot.rcParams['axes.edgecolor'] = '1'
 
+   
+    
     for i in tqdm(range(len(BayesMat))):
 
         filename=BayesMat[i]['filename']
         filename_without_ext = os.path.splitext(filename)[0]
+        
+        colors = ['r', 'g', 'b']
+        figure_width = 8
+        figure_height = 3
 
-        fig, axs = plt.subplots(1, len(parameters2decon))
+        fig, axs = plt.subplots(1, len(parameters2decon), figsize=(figure_width, figure_height))
         fig.clf
         fig.suptitle('Results_constrained. Filename: '+os.path.basename(filename_without_ext), fontsize=10)
 
@@ -378,7 +384,7 @@ def generateplots_GMMconstrained_fitout(pathBayesCells_Plots,BayesMat,parameters
             xdata[np.where(np.isnan(xdata))]=0
             xdata=xdata[np.where(xdata>1e-10)]
 
-            n,bins,patches=axs[count3].hist(xdata, edgecolor='c', color='c', density=True, bins=nbins, alpha=0.3);
+            n,bins,patches=axs[count3].hist(xdata, edgecolor=colors[i], color=colors[i], density=True, bins=nbins, alpha=0.3);
             x=arange(min(bins),max(bins),bins[1]-bins[0])
 
             weights= BayesMat[i]['Deconvolution'][parameter2analyse]['weights']
@@ -388,11 +394,43 @@ def generateplots_GMMconstrained_fitout(pathBayesCells_Plots,BayesMat,parameters
             number_populations=Sel_numDist[count3]
             model0=BayesMat[i]['Deconvolution'][parameter2analyse]['model']
             
-            axs[count3].set_title('DistType: '+DistributionType + ', # Populations: '+str(number_populations),fontsize=6)
-            axs[count3].set_xlabel(parameter2analyse, fontsize=8)
+            axs[count3].set_title('Dist Type: '+DistributionType + ', # Populations: '+str(number_populations),fontsize=6)
+            #axs[count3].set_xlabel(parameter2analyse, fontsize=8)
             
-            axs[count3].xaxis.set_tick_params(labelsize=10)
-            axs[count3].yaxis.set_tick_params(labelsize=10)
+            #axs[count3].xaxis.set_tick_params(labelsize=10)
+            #axs[count3].yaxis.set_tick_params(labelsize=10)
+
+            #
+
+            #axs[count3].set_title('') #'DistType: '+DistributionType + ', # Populations: '+str(number_populations),fontsize=6)
+            axs[count3].set_xlabel(parameter2analyse, fontsize=10)
+            
+            axs[count3].xaxis.set_tick_params(labelsize=font_size)
+            axs[count3].yaxis.set_tick_params(labelsize=font_size)
+
+            axs[count3].xaxis.set_visible(True)
+            axs[count3].yaxis.set_visible(True)
+
+            # Adjust the spines
+            axs[count3].spines["bottom"].set_color('black')
+            axs[count3].spines['bottom'].set_linewidth(1)
+            axs[count3].spines["left"].set_color('black')
+            axs[count3].spines['left'].set_linewidth(1)
+
+            # Plot the ticks
+            axs[count3].tick_params(axis='x', width=1, which='both', bottom=True)
+            axs[count3].tick_params(axis='y', width=1, which='both', left=True)
+
+            xticks = sample_range(min(bins), max(bins), 3)
+            axs[count3].set_xlim(xticks[0], xticks[-1])
+            axs[count3].set_xticks(xticks)
+
+            import math
+            difference = axs[count3].get_ylim()[1] - axs[count3].get_ylim()[0]
+            yticks = sample_range(axs[count3].get_ylim()[0], axs[count3].get_ylim()[1] + (difference * 0.1), 4)
+            axs[count3].set_ylim(yticks[0], yticks[-1])
+            axs[count3].set_yticks(yticks)
+            #
             
             tempval=np.zeros(x.shape)
 
