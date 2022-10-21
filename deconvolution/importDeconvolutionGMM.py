@@ -145,7 +145,7 @@ def generateplots_TestGMM(pathBayesCells_Plots,BayesMat, parameters,nbins,showpl
     import matplotlib.font_manager as font_manager
     from matplotlib.ticker import FuncFormatter
 
-    #verify_plotting_packages()
+    verify_plotting_packages()
     
     font_size = 10
     seaborn.set_style("whitegrid")
