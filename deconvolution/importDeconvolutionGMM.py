@@ -235,7 +235,7 @@ def generateplots_TestGMM(pathBayesCells_Plots,BayesMat, parameters,nbins,showpl
             # MAGIC
             xdata = BayesMat[i][parameter2analyse].reshape(-1, 1)
             xdata[np.where(np.isnan(xdata))] = 0
-            xdata = xdata[np.where(xdata > 1e-10)]
+            xdata = xdata[np.where(xdata > 1e-5)]
 
             # Construct the histogram 
             n, bins, patches = axs[i_paramter].hist(xdata, edgecolor=colors[i_paramter], color=colors[i_paramter], density=True, bins=nbins, alpha=0.3)
@@ -643,4 +643,3 @@ def generate_plots_stats_decon(BayesMatSel,param,pathBayesCells_Populations_Plot
     dfTitle=pd.DataFrame([param])
     dfTitle.to_csv(filename_csv, index=False, header=False)
     df.to_csv(filename_csv, mode='a')
-
