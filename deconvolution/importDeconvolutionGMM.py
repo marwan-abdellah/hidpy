@@ -16,30 +16,6 @@ import matplotlib.pyplot as pyplot
 import matplotlib.font_manager as font_manager
 from matplotlib.ticker import FuncFormatter
 
-"""
-font_size = 10
-seaborn.set_style("whitegrid")
-pyplot.rcParams['axes.grid'] = 'True'
-pyplot.rcParams['grid.linestyle'] = '--'
-pyplot.rcParams['grid.linewidth'] = 1.0
-pyplot.rcParams['grid.color'] = 'gray'
-pyplot.rcParams['grid.alpha'] = 0.25
-pyplot.rcParams['font.family'] = 'Helvetica LT Std'
-pyplot.rcParams['font.family'] = 'NimbusSanL'
-pyplot.rcParams['font.monospace'] = 'Regular'
-pyplot.rcParams['font.style'] = 'normal'
-pyplot.rcParams['axes.labelweight'] = 'light'
-pyplot.rcParams['axes.linewidth'] = 1.0
-pyplot.rcParams['axes.labelsize'] = font_size
-pyplot.rcParams['xtick.labelsize'] = font_size
-pyplot.rcParams['ytick.labelsize'] = font_size
-pyplot.rcParams['legend.fontsize'] = font_size
-pyplot.rcParams['figure.titlesize'] = font_size
-pyplot.rcParams['axes.titlesize'] = font_size
-pyplot.rcParams['xtick.major.pad'] = '10'
-pyplot.rcParams['ytick.major.pad'] = '0'
-pyplot.rcParams['axes.edgecolor'] = '1'
-"""
 
 def sample_range(start,
                  end,
@@ -95,6 +71,67 @@ def applyGMM_Multiple(listdir,parameters2decon,numDist):
         count=count+1 
     
     return BayesMat
+    
+
+####################################################################################################
+# @apply_gmm_on_multiple_files
+####################################################################################################
+def apply_gmm_on_multiple_files(directory, parameters_to_deconvolve, number_distributions):
+    
+    # Build this dictionary 
+    bayes_matrix = {}
+
+    # Simple counter, starting at zero
+    count = 0
+
+    # For every file in the directory 
+    for filename in tqdm(directory):
+        
+        # Construct the GMM input 
+        gmm_input = list()
+
+        # Construct the output matrix dictionary 
+        output_matrix_dic = {}
+
+        # Load the pickle file 
+        bayes_matrix[count] = pickle.load(open(filename, 'rb'))
+        
+        # Set the file name 
+        bayes_matrix[count]['filename'] = filename
+        
+        # 
+        Bayes1 = bayes_matrix[count]
+
+        # For each parameter that will be deconvolved 
+        for parameter in parameters_to_deconvolve:
+            
+            # Get the HiD parameter from the dictionary 
+            hid_parameter = Bayes1[parameter]            
+            
+            # Set all the nan values to Zero 
+            hid_parameter[np.where(np.isnan(hid_parameter))] = 0
+            
+            # Find the index where the hid_parameter is significant 
+            index = np.where(hid_parameter > 1e-10)
+            
+            # 
+            A = np.squeeze(np.asarray(hid_parameter[index]))
+            A = np.random.choice(A, 2000)                                 # use to reduce the data to fit
+            
+            gmm_input = A.reshape(-1, 1)
+
+            output_variable, output_matrix = applyGMM_functions.applyGMMfun(gmm_input, number_distributions)
+
+            output_matrix_dic[parameter] = output_matrix
+        
+        # Update the deconvolution matrix 
+        bayes_matrix[count]['Deconvolution'] = output_matrix_dic
+        
+        # Next file 
+        count = count + 1 
+
+    # Return tha analysis matrix 
+    return bayes_matrix
 
 def applyGMMconstrained_dir(listdir,parameters2decon,DistributionType,numDist):
     
@@ -147,9 +184,9 @@ def generateplots_TestGMM(pathBayesCells_Plots,BayesMat, parameters,nbins,showpl
 
     verify_plotting_packages()
     
-    font_size = 10
+    font_size = 14
     seaborn.set_style("whitegrid")
-    pyplot.rcParams['axes.grid'] = 'False'
+    pyplot.rcParams['axes.grid'] = 'True'
     pyplot.rcParams['grid.linewidth'] = 1.0
     pyplot.rcParams['grid.color'] = 'black'
     pyplot.rcParams['grid.alpha'] = 0.25
@@ -170,9 +207,7 @@ def generateplots_TestGMM(pathBayesCells_Plots,BayesMat, parameters,nbins,showpl
     pyplot.rcParams['axes.edgecolor'] = '1'
 
     for i in tqdm(range(len(BayesMat))):
-        
 
-        
         # Get the file name 
         file_name = BayesMat[i]['filename']
         
