@@ -33,7 +33,8 @@ def lsqcurvefit_GLS(funcstr,b0,x,y,error_cov,lowBound,upBound):
     try:
         L0=np.linalg.cholesky(error_cov)
     except:
-        print('Warning: regularization failed')
+#       print('Warning: regularization failed')
+        pass
     
     exec('global f_N0 \ndef f_N0(x,b): return ' + funcstr)
     exec('global f_N \ndef f_N(x,b): return np.linalg.solve(L0,' + funcstr+')')
