@@ -528,7 +528,7 @@ def apply_bayesian_inference(MSD, dT,models_selected):
     
     if parallelflag:
         ### Parallel
-        num_cores = 8       #multiprocessing.cpu_count()
+        num_cores = multiprocessing.cpu_count()
         print('Using # cores:'+str(round(num_cores)))
         results = Parallel(n_jobs=round(num_cores))(delayed(func)(MSD,i,yx_coords,timelags,msd_params) for i in tqdm(range(yx_coords.shape[0])))
     else:

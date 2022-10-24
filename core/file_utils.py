@@ -102,3 +102,12 @@ def veryify_input_options(video_sequence,
     
     # Return the output directory 
     return specific_output_directory
+
+
+####################################################################################################
+# @get_prefix
+####################################################################################################
+def get_prefix(input_path):
+
+    # Return the stem 
+    return pathlib.Path(input_path).stem

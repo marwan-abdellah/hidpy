@@ -3,12 +3,16 @@ import random
 import cv2
 import os
 from PIL import Image
+import matplotlib
 from matplotlib import pyplot 
-from matplotlib import pyplot
+from matplotlib import colors
 import matplotlib.pyplot as pyplot
 import matplotlib.font_manager as font_manager
 from matplotlib.ticker import FuncFormatter
+from matplotlib.ticker import MaxNLocator
 import seaborn
+import time
+
 
 ####################################################################################################
 # @verify_plotting_packages
@@ -47,6 +51,9 @@ def sample_range(start,
 ####################################################################################################
 def plot_trajectories_on_frame(frame, trajectories, output_path):
 
+    # Compute the time 
+    start = time.time()
+    
     # Create an RGB image from the input frame 
     rgb_image = Image.fromarray(frame).convert("RGB")
     
@@ -179,81 +186,12 @@ def plot_frame(frame, output_directory, frame_prefix, font_size=10):
     
     # Color-bar 
     cb = pyplot.colorbar(im, ax=ax, cax=cax, orientation="horizontal", ticks=cbticks)
-    cb.ax.tick_params(labelsize=int(font_size * 0.75), width=0.5) 
+    cb.ax.tick_params(labelsize=font_size, width=0.5) 
     cb.ax.set_xlim((cbticks[0], cbticks[-1]))
     cb.update_ticks()
 
     # Save the figure 
     pyplot.savefig('%s/%s.png' % (output_directory, frame_prefix), dpi=300, bbox_inches='tight', pad_inches=0)
-
-
-
-def plot_matrix(matrix, output_directory, frame_prefix, font_size=10):
-
-    from matplotlib import colors
-
-
-    verify_plotting_packages()
-    
-    seaborn.set_style("whitegrid")
-    pyplot.rcParams['axes.grid'] = 'True'
-    pyplot.rcParams['grid.linewidth'] = 0.5
-    pyplot.rcParams['grid.color'] = 'black'
-    pyplot.rcParams['grid.alpha'] = 0.25
-    pyplot.rcParams['font.family'] = 'NimbusSanL'
-    pyplot.rcParams['font.monospace'] = 'Regular'
-    pyplot.rcParams['font.style'] = 'normal'
-    pyplot.rcParams['axes.labelweight'] = 'light'
-    pyplot.rcParams['axes.linewidth'] = 0.5
-    pyplot.rcParams['axes.labelsize'] = font_size
-    pyplot.rcParams['xtick.labelsize'] = font_size
-    pyplot.rcParams['ytick.labelsize'] = font_size
-    pyplot.rcParams['legend.fontsize'] = font_size
-    pyplot.rcParams['figure.titlesize'] = font_size
-    pyplot.rcParams['axes.titlesize'] = font_size
-    pyplot.rcParams['xtick.major.pad'] = '1'
-    pyplot.rcParams['ytick.major.pad'] = '1'
-    pyplot.rcParams['axes.edgecolor'] = '0'
-    pyplot.rcParams['axes.autolimit_mode'] = 'round_numbers'
-
-    # Plot 
-    fig, ax = pyplot.subplots()
-    
-    # Create the ticks of the images 
-    xticks = sample_range(0, matrix.shape[0], 5)
-    yticks = sample_range(0, matrix.shape[1], 5)
-
-    cmap = colors.ListedColormap(['w','g','b','purple','r','greenyellow'])
-
-    # Show the image 
-    im = pyplot.imshow(matrix, cmap=cmap)
-    ax.set_xlim(xticks[0], xticks[-1])
-    ax.set_ylim(yticks[0], yticks[-1])
-    ax.set_xticks(xticks)
-    ax.set_yticks(yticks)
-    
-    
-    
-    # Color-basr axis 
-    cax = ax.inset_axes([0.00, -0.15, 1.0, 0.05])
-
-    # Create the ticks based on the range 
-    cbticks = sample_range((frame.min()), (frame.max()), 4)
-    cbticks = list(map(int, cbticks))
-
-    # Convert the ticks to a numpy array 
-    cbticks = numpy.array(cbticks)
-    
-    # Color-bar 
-    cb = pyplot.colorbar(im, ax=ax, cax=cax, orientation="horizontal", ticks=cbticks)
-    cb.ax.tick_params(labelsize=int(font_size * 0.75), width=0.5) 
-    cb.ax.set_xlim((cbticks[0], cbticks[-1]))
-    cb.update_ticks()
-
-    # Save the figure 
-    pyplot.savefig('%s/%s.png' % (output_directory, frame_prefix), dpi=300, bbox_inches='tight', pad_inches=0)
-
-
 
 
 ####################################################################################################
@@ -318,6 +256,143 @@ def plot_labels_map(labels_map, output_directory, frame_prefix, font_size=10, np
     loc = labels_cbar
     cbar.set_ticks(loc)
 
+
+    # Save the figure 
+    pyplot.savefig('%s/%s.png' % (output_directory, frame_prefix), dpi=300, bbox_inches='tight', pad_inches=0)
+
+
+####################################################################################################
+# @plot_model_selection_image
+####################################################################################################
+def plot_model_selection_image(model_selection_matrix, 
+                               mask_matrix, 
+                               output_directory, 
+                               frame_prefix, 
+                               font_size=14, 
+                               title='Model Selection'):
+
+    verify_plotting_packages()
+
+    # Styles 
+    seaborn.set_style("whitegrid")
+    pyplot.rcParams['axes.grid'] = 'False'
+    pyplot.rcParams['grid.linewidth'] = 0.5
+    pyplot.rcParams['grid.color'] = 'black'
+    pyplot.rcParams['grid.alpha'] = 0.25
+    pyplot.rcParams['font.family'] = 'NimbusSanL'
+    pyplot.rcParams['font.monospace'] = 'Regular'
+    pyplot.rcParams['font.style'] = 'normal'
+    pyplot.rcParams['axes.labelweight'] = 'light'
+    pyplot.rcParams['axes.linewidth'] = 0.5
+    pyplot.rcParams['axes.labelsize'] = font_size
+    pyplot.rcParams['xtick.labelsize'] = font_size
+    pyplot.rcParams['ytick.labelsize'] = font_size
+    pyplot.rcParams['legend.fontsize'] = font_size
+    pyplot.rcParams['figure.titlesize'] = font_size
+    pyplot.rcParams['axes.titlesize'] = font_size
+    pyplot.rcParams['xtick.major.pad'] = '1'
+    pyplot.rcParams['ytick.major.pad'] = '1'
+    pyplot.rcParams['axes.edgecolor'] = '0'
+
+    # A new figure 
+    pyplot.clf
+    fig, ax = pyplot.subplots()
+
+    # Create the color-map 
+    palette = seaborn.color_palette("hls", 5)
+    palette.insert(0, 'w')
+    cmap = colors.ListedColormap(palette)
+    
+    # Render the image 
+    image = ax.imshow(model_selection_matrix, interpolation='nearest', cmap=cmap, origin='lower')
+    ax.contour(mask_matrix, colors='k', origin='lower')
+
+    # Create the ticks of the images 
+    xticks = sample_range(0, model_selection_matrix.shape[0], 3)
+    yticks = sample_range(0, model_selection_matrix.shape[1], 3)
+
+    # Update the axex 
+    ax.set_xlim(xticks[0], xticks[-1])
+    ax.set_ylim(yticks[0], yticks[-1])
+    ax.set_xticks(xticks)
+    ax.set_yticks(yticks)
+
+    # Update the title 
+    ax.set_title(title)
+
+    # Color-bar bounds  
+    bounds = [0.5, 1.5, 2.5, 3.5, 4.5]
+
+    cbar = fig.colorbar(image,ax=ax,spacing='proportional',orientation='vertical',boundaries=[-0.5] + bounds + [5.5])
+    cbar.set_ticks(numpy.arange(0, 6, 1))
+    cbar.set_ticklabels([' ','D','DA','V','DV','DAV'])
+
+    # Save the figure 
+    pyplot.savefig('%s/%s.png' % (output_directory, frame_prefix), dpi=300, bbox_inches='tight', pad_inches=0)
+
+
+####################################################################################################
+# @plot_matrix_map
+####################################################################################################
+def plot_matrix_map(matrix, mask_matrix, output_directory, frame_prefix, font_size=14, title='Matrix'):
+
+    verify_plotting_packages()
+    
+    seaborn.set_style("whitegrid")
+    pyplot.rcParams['axes.grid'] = 'False'
+    pyplot.rcParams['grid.linewidth'] = 0.5
+    pyplot.rcParams['grid.color'] = 'black'
+    pyplot.rcParams['grid.alpha'] = 0.25
+    pyplot.rcParams['font.family'] = 'NimbusSanL'
+    pyplot.rcParams['font.monospace'] = 'Regular'
+    pyplot.rcParams['font.style'] = 'normal'
+    pyplot.rcParams['axes.labelweight'] = 'light'
+    pyplot.rcParams['axes.linewidth'] = 0.5
+    pyplot.rcParams['axes.labelsize'] = font_size
+    pyplot.rcParams['xtick.labelsize'] = font_size
+    pyplot.rcParams['ytick.labelsize'] = font_size
+    pyplot.rcParams['legend.fontsize'] = font_size
+    pyplot.rcParams['figure.titlesize'] = font_size
+    pyplot.rcParams['axes.titlesize'] = font_size
+    pyplot.rcParams['xtick.major.pad'] = '1'
+    pyplot.rcParams['ytick.major.pad'] = '1'
+    pyplot.rcParams['axes.edgecolor'] = '0'
+
+    # New figure  
+    pyplot.clf
+    fig, ax = pyplot.subplots()
+    
+    # Create the ticks of the images 
+    xticks = sample_range(0, matrix.shape[0], 4)
+    yticks = sample_range(0, matrix.shape[1], 4)
+
+    # Show the image 
+    image = pyplot.imshow(matrix, interpolation='nearest',cmap='viridis',origin='lower')
+    ax.contour(mask_matrix, colors='k', origin='lower')
+
+    # Axes 
+    xticks = list(map(int, xticks))
+    yticks = list(map(int, yticks))
+    ax.set_xlim(xticks[0], xticks[-1])
+    ax.set_ylim(yticks[0], yticks[-1])
+    ax.set_xticks(xticks)
+    ax.set_yticks(yticks)
+
+    # Title 
+    ax.set_title(title)
+
+    # Color-bar 
+    fmt = matplotlib.ticker.ScalarFormatter(useMathText=True)
+    fmt.set_powerlimits((0, 0))
+    cbar = fig.colorbar(image, ax=ax,  spacing='proportional',orientation='vertical', format=fmt)
+    cbar.formatter.set_powerlimits((0, 0)) 
+    cbar.ax.yaxis.set_major_locator(MaxNLocator(integer=True))
+    
+    # Re-adjust the color-bar 
+    cb_range = cbar.ax.get_ylim()
+    cbticks = sample_range(cb_range[0], cb_range[-1], 4)
+    cbticks = numpy.array(cbticks)
+    cbar.update_ticks()
 
     # Save the figure 
     pyplot.savefig('%s/%s.png' % (output_directory, frame_prefix), dpi=300, bbox_inches='tight', pad_inches=0)

@@ -23,6 +23,9 @@ def interpolate_flow_field(x, y, u, v, kind='cubic'):
 ####################################################################################################
 def interpolate_flow_fields(u_arrays, v_arrays):
 
+    # Compute the time 
+    start = time.time()
+
     # Arrays of interpolated fields 
     fu_arrays = list()
     fv_arrays = list()
@@ -41,6 +44,8 @@ def interpolate_flow_fields(u_arrays, v_arrays):
         # Append the interpolate fields 
         fu_arrays.append(fu)
         fv_arrays.append(fv)
+
+    print('Interpolation Time %f' % (time.time() - start))
     
     # Return the interpolated flow fields 
     return fu_arrays, fv_arrays
@@ -118,7 +123,7 @@ def compute_optical_flow_farneback(frames, parallel=False):
             u_arrays.append(U)
             v_arrays.append(V)
 
-        print('Optical flow time %f' % (time.time() - start))
+        print('Optical flow Time %f' % (time.time() - start))
 
         # Return the Displacement maps 
         return u_arrays, v_arrays
@@ -219,12 +224,17 @@ def compute_trajectories(frame, fu_arrays, fv_arrays, pixel_threshold=15, parall
 
     else:
 
+        # Compute the time 
+        start = time.time()
+
         # A list containing all the trajectories 
         trajectories = list()
         for ii in tqdm(range(frame.shape[0]), bar_format='{l_bar}{bar:50}{r_bar}{bar:-50b}'):
             for jj in range(frame.shape[1]):
                 if frame[ii, jj] > pixel_threshold:
                     trajectories.append(compute_trajectory(ii, jj, fu_arrays, fv_arrays))
+
+        print('Trajectory Computation Time %f' % (time.time() - start))
 
         # Return a reference to the trajectories list 
         return trajectories
