@@ -133,7 +133,7 @@ def plot_trajectories(size, trajectories, output_path):
 ####################################################################################################
 # @plot_frame
 ####################################################################################################
-def plot_frame(frame, output_directory, frame_prefix, font_size=10):
+def plot_frame(frame, output_directory, frame_prefix, font_size=10, tick_count=5):
 
     verify_plotting_packages()
     
@@ -163,8 +163,8 @@ def plot_frame(frame, output_directory, frame_prefix, font_size=10):
     fig, ax = pyplot.subplots()
     
     # Create the ticks of the images 
-    xticks = sample_range(0, frame.shape[0], 5)
-    yticks = sample_range(0, frame.shape[1], 5)
+    xticks = sample_range(0, frame.shape[0], tick_count)
+    yticks = sample_range(0, frame.shape[1], tick_count)
 
     # Show the image 
     im = pyplot.imshow(frame)
@@ -269,7 +269,8 @@ def plot_model_selection_image(model_selection_matrix,
                                output_directory, 
                                frame_prefix, 
                                font_size=14, 
-                               title='Model Selection'):
+                               title='Model Selection', 
+                               tick_count=5):
 
     verify_plotting_packages()
 
@@ -308,8 +309,8 @@ def plot_model_selection_image(model_selection_matrix,
     ax.contour(mask_matrix, colors='k', origin='lower')
 
     # Create the ticks of the images 
-    xticks = sample_range(0, model_selection_matrix.shape[0], 3)
-    yticks = sample_range(0, model_selection_matrix.shape[1], 3)
+    xticks = sample_range(0, model_selection_matrix.shape[0], tick_count)
+    yticks = sample_range(0, model_selection_matrix.shape[1], tick_count)
 
     # Update the axex 
     ax.set_xlim(xticks[0], xticks[-1])
@@ -334,7 +335,7 @@ def plot_model_selection_image(model_selection_matrix,
 ####################################################################################################
 # @plot_matrix_map
 ####################################################################################################
-def plot_matrix_map(matrix, mask_matrix, output_directory, frame_prefix, font_size=14, title='Matrix'):
+def plot_matrix_map(matrix, mask_matrix, output_directory, frame_prefix, font_size=14, title='Matrix', tick_count=5):
 
     verify_plotting_packages()
     
@@ -363,8 +364,8 @@ def plot_matrix_map(matrix, mask_matrix, output_directory, frame_prefix, font_si
     fig, ax = pyplot.subplots()
     
     # Create the ticks of the images 
-    xticks = sample_range(0, matrix.shape[0], 4)
-    yticks = sample_range(0, matrix.shape[1], 4)
+    xticks = sample_range(0, matrix.shape[0], tick_count)
+    yticks = sample_range(0, matrix.shape[1], tick_count)
 
     # Show the image 
     image = pyplot.imshow(matrix, interpolation='nearest',cmap='viridis',origin='lower')

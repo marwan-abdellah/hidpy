@@ -45,6 +45,7 @@ def verify_plotting_packages():
         font_manager.fontManager.addfont(font_file)
 
 
+
 def applyGMM_Multiple(listdir,parameters2decon,numDist):
     BayesMat={}
     count=0
@@ -85,7 +86,7 @@ def apply_gmm_on_multiple_files(directory, parameters_to_deconvolve, number_dist
     count = 0
 
     # For every file in the directory 
-    for filename in tqdm(directory):
+    for file in tqdm(directory):
         
         # Construct the GMM input 
         gmm_input = list()
@@ -94,10 +95,10 @@ def apply_gmm_on_multiple_files(directory, parameters_to_deconvolve, number_dist
         output_matrix_dic = {}
 
         # Load the pickle file 
-        bayes_matrix[count] = pickle.load(open(filename, 'rb'))
+        bayes_matrix[count] = pickle.load(open(file, 'rb'))
         
         # Set the file name 
-        bayes_matrix[count]['filename'] = filename
+        bayes_matrix[count]['filename'] = file
         
         # 
         Bayes1 = bayes_matrix[count]
@@ -114,9 +115,9 @@ def apply_gmm_on_multiple_files(directory, parameters_to_deconvolve, number_dist
             # Find the index where the hid_parameter is significant 
             index = np.where(hid_parameter > 1e-10)
             
-            # 
+            # use to reduce the data to fit
             A = np.squeeze(np.asarray(hid_parameter[index]))
-            A = np.random.choice(A, 2000)                                 # use to reduce the data to fit
+            A = np.random.choice(A, 2000)                                 
             
             gmm_input = A.reshape(-1, 1)
 
@@ -307,7 +308,7 @@ def generateplots_TestGMM(pathBayesCells_Plots,BayesMat, parameters,nbins,showpl
             close(fig)
     
 
-def generatetable_TestGMM(pathBayesCells,BayesMat,parameters2decon):
+def generatetable_TestGMM(pathBayesCells, BayesMat, parameters2decon):
     
     row_labels=['normal','log-normal']
     df2={}
@@ -363,7 +364,6 @@ def generatetable_TestGMM(pathBayesCells,BayesMat,parameters2decon):
         ax[j].set_title(parameters2decon[j])
         ax[j].axis("off")
 
-    return
 
 def generateplots_GMMconstrained_fitout(pathBayesCells_Plots,BayesMat,parameters2decon,nbins,Sel_DistributionType,Sel_numDist,showplots):
 
@@ -533,12 +533,6 @@ def generate_plots_stats_decon(BayesMatSel,param,pathBayesCells_Populations_Plot
         thresh.append( np.max(data_in_label))
 
     thresh = np.sort(thresh)[:-1] # the last entry is not actually a threshold
-
-    # # for debugging - can be commented
-    # plt.plot(BayesMatSel[cell_id]['Deconvolution'][param]['x'], \
-    #     BayesMatSel[cell_id]['Deconvolution'][param]['p_pop'])
-    # for i in range(len(thresh)):
-    #     plt.plot((thresh[i], thresh[i]), (0, 1))
 
     # map distributions back to nucleus
     labels_map = np.zeros(BayesMatSel[param].shape, dtype=int)

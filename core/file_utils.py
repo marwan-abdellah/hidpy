@@ -111,3 +111,23 @@ def get_prefix(input_path):
 
     # Return the stem 
     return pathlib.Path(input_path).stem
+
+
+####################################################################################################
+# @list_files_in_directory
+####################################################################################################
+def list_files_in_directory(directory, 
+                            extension):
+
+    # List all the files 
+    files = list()
+    for file in os.listdir(directory):
+        if file.endswith(extension):
+            files.append(file)
+
+    # Prepend the directory to get the absolute path 
+    for i in range(len(files)):
+        files[i] = '%s/%s' % (directory, files[i])
+
+    # Return a list of the files found in the directory 
+    return files 
