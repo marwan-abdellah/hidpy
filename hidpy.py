@@ -20,7 +20,6 @@ def parse_command_line_arguments(arguments=None):
         Argument list.
     """
 
-    # add all the options
     description = 'hidpy is a pythonic implementation to the technique presented by Shaban et al, 2020.'
     parser = argparse.ArgumentParser(description=description)
 
@@ -42,7 +41,7 @@ def parse_command_line_arguments(arguments=None):
     arg_help = 'Number of iterations, default 8'
     parser.add_argument('--iterations', '-n', help=arg_help, type=int, default=8)
 
-    # models 
+    # Models
     arg_help = 'Use the D model'
     parser.add_argument('--d-model', action='store_true')
 
@@ -69,6 +68,8 @@ if __name__ == "__main__":
 
     # Parse the command line arguments
     args = parse_command_line_arguments()
+
+    # If configuration exists, then use the configuration 
 
     # Load the frames from the video 
     print('Loading frames')

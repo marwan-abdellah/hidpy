@@ -55,6 +55,34 @@ def parse_command_line_arguments(arguments=None):
     arg_help = 'Output directory, where the final results/artifacts will be stored'
     parser.add_argument('--output-directory', '--o', action='store', help=arg_help)
 
+    arg_help = 'The pixle threshold. (This value should be in microns, and should be known from the microscope camera)'
+    parser.add_argument('--pixel-threshold', '-t', help=arg_help, type=float, default=10)
+
+    arg_help = 'The pixle size. This value should be tested with trial-and-error'
+    parser.add_argument('--pixel-size', '-s', help=arg_help, type=float)
+
+    arg_help = 'Video time step.'
+    parser.add_argument('--delta-t', '-p', help=arg_help, type=float)
+
+    arg_help = 'Number of iterations, default 8'
+    parser.add_argument('--iterations', '-n', help=arg_help, type=int, default=8)
+
+    # Models
+    arg_help = 'Use the D model'
+    parser.add_argument('--d-model', action='store_true')
+
+    arg_help = 'Use the DA model'
+    parser.add_argument('--da-model', action='store_true')
+
+    arg_help = 'Use the V model'
+    parser.add_argument('--v-model', action='store_true')
+
+    arg_help = 'Use the DV model'
+    parser.add_argument('--dv-model', action='store_true')
+    
+    arg_help = 'Use the DAV model'
+    parser.add_argument('--dav-model', action='store_true')
+
     # Parse the arguments
     return parser.parse_args()
 
