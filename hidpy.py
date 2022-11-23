@@ -217,7 +217,7 @@ if __name__ == "__main__":
 
     # Get the drift velocity matrix (V)
     drift_velocity_matrix = bayes['V']
-    drift_velocity_matrix[numpy.where(bayes['model'] == 0)] = np.nan
+    drift_velocity_matrix[numpy.where(bayes['model'] == 0)] = numpy.nan
     drift_velocity_matrix[numpy.where(bayes['V']==0)] = numpy.nan
 
     # Plot the model selection image 
