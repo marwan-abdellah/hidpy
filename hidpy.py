@@ -7,6 +7,7 @@ import numpy
 import pathlib 
 import sys 
 import warnings
+import pickle
 warnings.filterwarnings('ignore') # Ignore all the warnings 
 
 # Path hidpy
@@ -51,13 +52,15 @@ def parse_command_line_arguments(arguments=None):
     arg_help = 'The pixle size. This value should be tested with trial-and-error'
     parser.add_argument('--pixel-size', help=arg_help, type=float)
 
+    arg_help = 'Number of cores. If 0, it will use all the cores available in the system'
+    parser.add_argument('--n-cores', help=arg_help, type=int, default=0)
+
     arg_help = 'Video time step.'
     parser.add_argument('--dt', help=arg_help, type=float)
 
     arg_help = 'Number of iterations, default 8'
     parser.add_argument('--iterations', help=arg_help, type=int, default=8)
 
-    # Models
     arg_help = 'Use the D model'
     parser.add_argument('--d-model', action='store_true')
 
@@ -111,17 +114,18 @@ if __name__ == "__main__":
         # READ CONFIG FILE
         config_file.read(args.config_file)
 
-        video_sequence = str(config_file['INPUT']['video_sequence'])
-        output_directory = str(config_file['INPUT']['output_directory'])
-        pixel_threshold = float(config_file['INPUT']['pixel_threshold'])
-        pixel_size = float(config_file['INPUT']['pixel_size'])
-        dt = float(config_file['INPUT']['dt'])
+        video_sequence = str(config_file['HID_PARAMETERS']['video_sequence'])
+        output_directory = str(config_file['HID_PARAMETERS']['output_directory'])
+        pixel_threshold = float(config_file['HID_PARAMETERS']['pixel_threshold'])
+        pixel_size = float(config_file['HID_PARAMETERS']['pixel_size'])
+        dt = float(config_file['HID_PARAMETERS']['dt'])
+        ncores = int(config_file['HID_PARAMETERS']['n_cores'])
         
-        d_model = config_file['INPUT']['d_model']
-        da_model = config_file['INPUT']['da_model']
-        v_model = config_file['INPUT']['v_model']
-        dv_model = config_file['INPUT']['dv_model']
-        dav_model = config_file['INPUT']['dav_model']
+        d_model = config_file['HID_PARAMETERS']['d_model']
+        da_model = config_file['HID_PARAMETERS']['da_model']
+        v_model = config_file['HID_PARAMETERS']['v_model']
+        dv_model = config_file['HID_PARAMETERS']['dv_model']
+        dav_model = config_file['HID_PARAMETERS']['dav_model']
         
         models_selected = list()
         if d_model == 'Yes':
@@ -197,7 +201,7 @@ if __name__ == "__main__":
     # Compute the inference, Baysian fit on MSDs 
     print('* Fitting the MSDs models using Bayesian inference')
     warnings.filterwarnings('ignore') # Ignore all the warnings 
-    bayes = inference.apply_bayesian_inference(msd_array, dt, models_selected)
+    bayes = inference.apply_bayesian_inference(msd_array, dt, models_selected, args.n_cores)
 
 
     # The matrix that contains the mask of the nucli
@@ -245,8 +249,6 @@ if __name__ == "__main__":
         font_size=14, title=r'Drift Velocity ($\mu$m/s)', tick_count=3)
     
     # Save pickle file per cell
-    import pickle
-
     # Create the pickle directory 
     pickle_directory = '%s/pickle' % output_directory
     file_utils.create_directory(pickle_directory)

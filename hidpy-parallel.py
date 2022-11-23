@@ -4,9 +4,15 @@ import os
 import ntpath
 import argparse
 import subprocess
+import warnings
+warnings.filterwarnings('ignore') # Ignore all the warnings 
 
-# Internal imports 
+# Path hidpy
+sys.path.append('%s/../' % os.getcwd())
+
+# Internal packages 
 from core import file_utils
+
 
 ####################################################################################################
 # @execute_command
@@ -29,10 +35,9 @@ def execute_commands(shell_commands):
 ####################################################################################################
 # @execute_commands_parallel
 ####################################################################################################
-def execute_commands_parallel(shell_commands):
+def execute_commands_parallel(shell_commands, ncores):
     from joblib import Parallel, delayed
-    Parallel(n_jobs=8)(delayed(execute_command)(i) for i in shell_commands)
-
+    Parallel(n_jobs=ncores)(delayed(execute_command)(i) for i in shell_commands)
 
 ####################################################################################################
 # @parse_command_line_arguments
@@ -45,29 +50,30 @@ def parse_command_line_arguments(arguments=None):
         Argument list.
     """
 
-    # add all the options
     description = 'hidpy is a pythonic implementation to the technique presented by Shaban et al, 2020.'
     parser = argparse.ArgumentParser(description=description)
 
-    arg_help = 'The input videos that will be processed to generate the output data'
-    parser.add_argument('--input-sequences-directory', '--i', action='store', help=arg_help)
+    arg_help = 'The input configuration file that contains all the data. If this file is provided the other parameters are not considered'
+    parser.add_argument('--config-file', action='store', help=arg_help, default='EMPTY')
+
+    arg_help = 'The input stack or image sequence that will be processed to generate the output data'
+    parser.add_argument('--input-sequence', action='store', help=arg_help)
 
     arg_help = 'Output directory, where the final results/artifacts will be stored'
-    parser.add_argument('--output-directory', '--o', action='store', help=arg_help)
+    parser.add_argument('--output-directory', action='store', help=arg_help)
 
     arg_help = 'The pixle threshold. (This value should be in microns, and should be known from the microscope camera)'
-    parser.add_argument('--pixel-threshold', '-t', help=arg_help, type=float, default=10)
+    parser.add_argument('--pixel-threshold', help=arg_help, type=float, default=10)
 
     arg_help = 'The pixle size. This value should be tested with trial-and-error'
-    parser.add_argument('--pixel-size', '-s', help=arg_help, type=float)
+    parser.add_argument('--pixel-size', help=arg_help, type=float)
+
+    arg_help = 'Number of cores. If 0, it will use all the cores available in the system'
+    parser.add_argument('--n-cores', help=arg_help, type=int, default=0)
 
     arg_help = 'Video time step.'
-    parser.add_argument('--delta-t', '-p', help=arg_help, type=float)
+    parser.add_argument('--dt', help=arg_help, type=float)
 
-    arg_help = 'Number of iterations, default 8'
-    parser.add_argument('--iterations', '-n', help=arg_help, type=int, default=8)
-
-    # Models
     arg_help = 'Use the D model'
     parser.add_argument('--d-model', action='store_true')
 
@@ -102,8 +108,23 @@ def create_shell_commands(args):
 
         shell_command = '%s %s/hidpy.py ' % (sys.executable, os.path.dirname(os.path.realpath(__file__)))  
         shell_command += '--input-sequence %s/%s ' % (args.input_sequences_directory, video)
-        shell_command += '--output-directory %s/%s' % (args.output_directory, ntpath.basename(video).split('.')[0]) 
+        shell_command += '--output-directory %s' % str(args.output_directory) 
+        shell_command += '--pixel-threshold %s' % str(args.pixel_threshold) 
+        shell_command += '--pixel-size %s' % str(args.pixel_size) 
+        shell_command += '--dt %s' % str(args.dt) 
+        shell_command += '--n-cores 1'
 
+        if args.d_model: 
+            shell_command += '--d-model'  
+        if args.da_model: 
+            shell_command += '--da-model'  
+        if args.v_model: 
+            shell_command += '--v-model'  
+        if args.dv_model: 
+            shell_command += '--dv-model'  
+        if args.dav_model: 
+            shell_command += '--dav-model'  
+        
         shell_commands.append(shell_command)
 
     return shell_commands
@@ -121,4 +142,4 @@ if __name__ == "__main__":
     commands = create_shell_commands(args)
 
     # Run the jobs in parallel 
-    execute_commands_parallel(commands)
+    execute_commands_parallel(commands, ncores=args.n_cores)
