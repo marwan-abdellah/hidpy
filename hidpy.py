@@ -1,12 +1,25 @@
 # System imports  
 import argparse
 
-# Internal imports 
+# System packages 
+import os
+import numpy
+import pathlib 
+import sys 
+import warnings
+warnings.filterwarnings('ignore') # Ignore all the warnings 
+
+# Path hidpy
+sys.path.append('%s/../' % os.getcwd())
+
+# Internal packages 
+import core 
+from core import file_utils
 from core import optical_flow
 from core import video_processing
 from core import plotting
-from MSD_Bayes_Python import MSDimports
-from MSD_Bayes_Python import MSDBayesimports
+from core import msd
+from core import inference
 
 
 ####################################################################################################
@@ -23,23 +36,26 @@ def parse_command_line_arguments(arguments=None):
     description = 'hidpy is a pythonic implementation to the technique presented by Shaban et al, 2020.'
     parser = argparse.ArgumentParser(description=description)
 
+    arg_help = 'The input configuration file that contains all the data. If this file is provided the other parameters are not considered'
+    parser.add_argument('--config-file', action='store', help=arg_help, default='EMPTY')
+
     arg_help = 'The input stack or image sequence that will be processed to generate the output data'
-    parser.add_argument('--input-sequence', '-i', action='store', help=arg_help)
+    parser.add_argument('--input-sequence', action='store', help=arg_help)
 
     arg_help = 'Output directory, where the final results/artifacts will be stored'
-    parser.add_argument('--output-directory', '-o', action='store', help=arg_help)
+    parser.add_argument('--output-directory', action='store', help=arg_help)
 
     arg_help = 'The pixle threshold. (This value should be in microns, and should be known from the microscope camera)'
-    parser.add_argument('--pixel-threshold', '-t', help=arg_help, type=float, default=10)
+    parser.add_argument('--pixel-threshold', help=arg_help, type=float, default=10)
 
     arg_help = 'The pixle size. This value should be tested with trial-and-error'
-    parser.add_argument('--pixel-size', '-s', help=arg_help, type=float)
+    parser.add_argument('--pixel-size', help=arg_help, type=float)
 
     arg_help = 'Video time step.'
-    parser.add_argument('--delta-t', '-p', help=arg_help, type=float)
+    parser.add_argument('--dt', help=arg_help, type=float)
 
     arg_help = 'Number of iterations, default 8'
-    parser.add_argument('--iterations', '-n', help=arg_help, type=int, default=8)
+    parser.add_argument('--iterations', help=arg_help, type=int, default=8)
 
     # Models
     arg_help = 'Use the D model'
@@ -69,46 +85,172 @@ if __name__ == "__main__":
     # Parse the command line arguments
     args = parse_command_line_arguments()
 
-    # If configuration exists, then use the configuration 
+    if args.config_file == 'EMPTY':
+
+        video_sequence = args.input_sequence
+        output_directory = args.output_directory
+        pixel_threshold = args.pixel_threshold
+        pixel_size = args.pixel_size
+
+        dt = args.dt
+        models_selected = list()
+        if args.d_model: 
+            models_selected.append('D')
+        if args.da_model: 
+            models_selected.append('DA')
+        if args.v_model: 
+            models_selected.append('V')
+        if args.dv_model: 
+            models_selected.append('DV')
+        if args.dav_model: 
+            models_selected.append('DAV')
+    else:
+        import configparser
+        config_file = configparser.ConfigParser()
+
+        # READ CONFIG FILE
+        config_file.read(args.config_file)
+
+        video_sequence = str(config_file['INPUT']['video_sequence'])
+        output_directory = str(config_file['INPUT']['output_directory'])
+        pixel_threshold = float(config_file['INPUT']['pixel_threshold'])
+        pixel_size = float(config_file['INPUT']['pixel_size'])
+        dt = float(config_file['INPUT']['dt'])
+        
+        d_model = config_file['INPUT']['d_model']
+        da_model = config_file['INPUT']['da_model']
+        v_model = config_file['INPUT']['v_model']
+        dv_model = config_file['INPUT']['dv_model']
+        dav_model = config_file['INPUT']['dav_model']
+        
+        models_selected = list()
+        if d_model == 'Yes':
+            models_selected.append('D')
+        if da_model: 
+            models_selected.append('DA')
+        if v_model: 
+            models_selected.append('V')
+        if dv_model: 
+            models_selected.append('DV')
+        if dav_model: 
+            models_selected.append('DAV')
+
+    print(video_sequence)
+
+    # Get the prefix, typically with the name of the video sequence  
+    prefix = '%s_pixel-%2.2f_dt-%2.2f_threshold_%s' % (pathlib.Path(video_sequence).stem, pixel_size, dt, pixel_threshold)
+
+    ################# PLEASE DON'T EDIT THIS PANEL #################
+    # Verify the input parameters, and return the path where the output data will be written  
+    output_directory = file_utils.veryify_input_options(
+        video_sequence=video_sequence, output_directory=output_directory, 
+        pixel_threshold=pixel_threshold, pixel_size=pixel_size, dt=dt)
 
     # Load the frames from the video 
-    print('Loading frames')
     frames = video_processing.get_frames_list_from_video(
-        video_path=args.input_sequence, verbose=True)
+        video_path=video_sequence, verbose=True)
+
+    # Plot the first frames
+    plotting.verify_plotting_packages()
+    plotting.plot_frame(frame=frames[0], output_directory=output_directory, 
+        frame_prefix=prefix, font_size=14, tick_count=3)
+
 
     # Compute the optical flow
-    print('Computing optical flow') 
+    print('* Computing optical flow') 
     u, v = optical_flow.compute_optical_flow_farneback(frames=frames)
 
+
     # Interpolate the flow field
-    print('Computing interpolations')
+    print('* Computing interpolations')
     u, v = optical_flow.interpolate_flow_fields(u_arrays=u, v_arrays=v)
 
-    # Compute the trajectories 
-    print('Creating trajectories')
-    trajectories = optical_flow.compute_trajectories(
-        frame=frames[0], fu_arrays=u, fv_arrays=v, pixel_threshold=15)
 
+    # Compute the trajectories 
+    print('* Creating trajectories')
+    trajectories = optical_flow.compute_trajectories(
+        frame=frames[0], fu_arrays=u, fv_arrays=v, pixel_threshold=pixel_threshold)
+        
     # Plot the trajectories 
-    print('Plotting trajectories')
+    print('* Plotting trajectories')
     plotting.plot_trajectories_on_frame(
         frame=frames[0], trajectories=trajectories, 
-        output_path='%s/trajectories' % args.output_directory)
+        output_path='%s/%s_trajectories_threshold_%d' % (output_directory, prefix, pixel_threshold))
 
-    print('Saving the trajectories')
-    optical_flow.save_trajectories_to_file(trajectories=trajectories,
-         file_path='%s/trajectory' % args.output_directory)
+
+    # Construct trajectory map
+    print('* Converting the trajectories to maps')
+    xp, yp = msd.convert_trajectories_to_map(trajectories, (len(frames), frames[0].shape[0], frames[0].shape[1]))
+
+    # Convert displacement values to microns
+    xp_um = xp * pixel_size
+    yp_um = yp * pixel_size
+
+    # Extract nucleoli mask
+    print('* Extracting the nucleoli mask')
+    mask_nucleoli = msd.extract_nucleoli_map(xp_um, yp_um)
+
+    # Compute the MSDs
+    print('* Computing the MSDs')
+    msd_array = msd.calculate_msd_for_every_pixel(xp_um, yp_um, mask_nucleoli)
+
+    # Compute the inference, Baysian fit on MSDs 
+    print('* Fitting the MSDs models using Bayesian inference')
+    warnings.filterwarnings('ignore') # Ignore all the warnings 
+    bayes = inference.apply_bayesian_inference(msd_array, dt, models_selected)
+
+
+    # The matrix that contains the mask of the nucli
+    # TODO: What is the hard-coded value of 100?
+    mask_matrix = numpy.zeros((frames[0].shape[0], frames[0].shape[1]))
+    mask_matrix[numpy.where(mask_nucleoli == 1) ] = 100
+
+    # Get the diffusion constant map (D)
+    diffusion_constant_matrix = bayes['D']
+    diffusion_constant_matrix[numpy.where(bayes['model'] == 0)] = numpy.nan
+    diffusion_constant_matrix[numpy.where(bayes['D'] < 1e-10)] = numpy.nan
+
+    # Get the anomalous exponent matrix (A)
+    anomalous_exponent_matrx = bayes['A']
+    anomalous_exponent_matrx[numpy.where(bayes['model'] == 0)] = numpy.nan
+    anomalous_exponent_matrx[numpy.where(bayes['A'] < 1e-10)] = numpy.nan
+
+    # Get the drift velocity matrix (V)
+    drift_velocity_matrix = bayes['V']
+    drift_velocity_matrix[numpy.where(bayes['model'] == 0)] = np.nan
+    drift_velocity_matrix[numpy.where(bayes['V']==0)] = numpy.nan
+
+    # Plot the model selection image 
+    core.plotting.plot_model_selection_image(
+        model_selection_matrix=bayes['model'], mask_matrix=mask_matrix, 
+        output_directory=output_directory, frame_prefix='%s_model_selection' % prefix, 
+        font_size=14, title='Model Selection', tick_count=3)
+
+    # Plot the diffusion constant matrix 
+    core.plotting.plot_matrix_map(
+        matrix=diffusion_constant_matrix, mask_matrix=mask_matrix, 
+        output_directory=output_directory, frame_prefix='%s_diffusion_constant_matrix' % prefix, 
+        font_size=14, title=r'Diffusion Constant ($\mu$m$^2$/s)', tick_count=3)
+
+    # Plot the anomalous matrix 
+    core.plotting.plot_matrix_map(
+        matrix=anomalous_exponent_matrx, mask_matrix=mask_matrix, 
+        output_directory=output_directory, frame_prefix='%s_anomalous_matrix' % prefix, 
+        font_size=14, title='Anomalous Exponent', tick_count=3)
+
+    # Plot the drift velocity matrix
+    core.plotting.plot_matrix_map(
+        matrix=drift_velocity_matrix, mask_matrix=mask_matrix, 
+        output_directory=output_directory, frame_prefix='%s_drift_velocity_matrix' % prefix, 
+        font_size=14, title=r'Drift Velocity ($\mu$m/s)', tick_count=3)
     
-    # construct trajectory map
-    xp, yp = MSDimports.convert_trajectories_to_map(trajectories, (len(frames), frames[0].shape[0], frames[0].shape[1]))
+    # Save pickle file per cell
+    import pickle
 
-    # extract nucleoli mask
-    mask_nuc = MSDimports.extract_nucleoli_map(xp, yp)
+    # Create the pickle directory 
+    pickle_directory = '%s/pickle' % output_directory
+    file_utils.create_directory(pickle_directory)
 
-    # compute the MSDs
-    MSD = MSDimports.MSDcalculation(xp, yp, mask_nuc)
-
-    # Baysian fit on MSDs
-    models_selected = ['D','DA','V','DV','DAV'] ### this should be specified by the user in the config file
-    dT = 0.1 ### this should be specified by the user in the config file
-    Bayes = MSDBayesimports.MSDBayes(MSD, dT, models_selected)
+    # Save the pickle file 
+    with open('%s/%s.pickle' % (pickle_directory, prefix), 'wb') as f:
+        pickle.dump(bayes, f)
