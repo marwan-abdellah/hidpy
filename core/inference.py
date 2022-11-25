@@ -483,7 +483,7 @@ def msd_curves_bayes(timelags,MSD_curves,msd_params):
 ####################################################################################################
 # @apply_bayesian_inference
 ####################################################################################################
-def apply_bayesian_inference(MSD, dT,models_selected, num_cores): 
+def apply_bayesian_inference(MSD, dT,models_selected, num_cores=0): 
     """
     MSDBayes: Applies a Bayesian inference to a small subset of up to 10
     trajectories and thereby chooses the best fitting model considering the
@@ -529,7 +529,7 @@ def apply_bayesian_inference(MSD, dT,models_selected, num_cores):
     if num_cores == 0:
         ncores = multiprocessing.cpu_count()
         print('Using # cores:'+str(round(ncores)))
-        results = Parallel(n_jobs=round(num_cores))(delayed(func)(MSD,i,yx_coords,timelags,msd_params) for i in tqdm(range(yx_coords.shape[0])))
+        results = Parallel(n_jobs=round(ncores))(delayed(func)(MSD,i,yx_coords,timelags,msd_params) for i in tqdm(range(yx_coords.shape[0])))
     elif num_cores > 1:
         print('Using # cores:' + str(round(num_cores)))
         results = Parallel(n_jobs=round(num_cores))(delayed(func)(MSD,i,yx_coords,timelags,msd_params) for i in tqdm(range(yx_coords.shape[0])))

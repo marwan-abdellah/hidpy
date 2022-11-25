@@ -131,3 +131,44 @@ def list_files_in_directory(directory,
 
     # Return a list of the files found in the directory 
     return files 
+
+
+####################################################################################################
+# @create_report_1_summary
+####################################################################################################
+def create_report_1_summary(output_directory, frame_0, trajectory, model_selection, d_map, a_map, v_map):
+    
+    report_1_template = '%s/../report-templates/report_1.html' % os.path.dirname(__file__)
+    report_1_output = '%s/%s' % (output_directory, 'hidpy-report-1.html')
+
+    f = open(report_1_template, 'r')
+    output_report_text = ''
+    for line in f:
+        
+        if 'VIDEO_SEQUENCE_FRAME_0_IMAGE' in line:
+            img = '%s/%s.png' % (output_directory, frame_0)
+            line = line.replace('VIDEO_SEQUENCE_FRAME_0_IMAGE', img)
+        elif 'TRAJECTORY_IMAGE' in line:
+            img = '%s/%s.png' % (output_directory, trajectory)
+            line = line.replace('TRAJECTORY_IMAGE', img)
+        elif 'MODEL_SELECTION_IMAGE' in line:
+            img = '%s/%s.png' % (output_directory, model_selection)
+            line = line.replace('MODEL_SELECTION_IMAGE', img)
+        elif 'D_MAP_IMAGE' in line:
+            img = '%s/%s.png' % (output_directory, d_map)
+            line = line.replace('D_MAP_IMAGE', img)
+        elif 'A_MAP_IMAGE' in line:
+            img = '%s/%s.png' % (output_directory, a_map)
+            line = line.replace('A_MAP_IMAGE', img)
+        elif 'V_MAP_IMAGE' in line:
+            img = '%s/%s.png' % (output_directory, v_map)
+            line = line.replace('V_MAP_IMAGE', img)
+        else: 
+            pass 
+        
+        output_report_text += line
+    f.close()
+
+    f = open(report_1_output, 'w')
+    f.write(output_report_text)
+    f.close()

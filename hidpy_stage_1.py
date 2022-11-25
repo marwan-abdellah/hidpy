@@ -177,10 +177,10 @@ if __name__ == "__main__":
         
     # Plot the trajectories 
     print('* Plotting trajectories')
+    trajectory_image_prefix = '%s_trajectory' % prefix
     plotting.plot_trajectories_on_frame(
         frame=frames[0], trajectories=trajectories, 
-        output_path='%s/%s_trajectories_threshold_%d' % (output_directory, prefix, pixel_threshold))
-
+        output_path='%s/%s' % (output_directory, trajectory_image_prefix))
 
     # Construct trajectory map
     print('* Converting the trajectories to maps')
@@ -203,8 +203,8 @@ if __name__ == "__main__":
     warnings.filterwarnings('ignore') # Ignore all the warnings 
     bayes = inference.apply_bayesian_inference(msd_array, dt, models_selected, args.n_cores)
 
-
     # The matrix that contains the mask of the nucli
+    print('* Creating the maps')
     # TODO: What is the hard-coded value of 100?
     mask_matrix = numpy.zeros((frames[0].shape[0], frames[0].shape[1]))
     mask_matrix[numpy.where(mask_nucleoli == 1) ] = 100
@@ -225,34 +225,47 @@ if __name__ == "__main__":
     drift_velocity_matrix[numpy.where(bayes['V']==0)] = numpy.nan
 
     # Plot the model selection image 
+    model_selection_image_prefix = '%s_model_selection' % prefix
     core.plotting.plot_model_selection_image(
         model_selection_matrix=bayes['model'], mask_matrix=mask_matrix, 
-        output_directory=output_directory, frame_prefix='%s_model_selection' % prefix, 
+        output_directory=output_directory, frame_prefix=model_selection_image_prefix, 
         font_size=14, title='Model Selection', tick_count=3)
 
-    # Plot the diffusion constant matrix 
+    # Plot the diffusion constant matrix
+    d_map_image_prefix = '%s_diffusion_constant_matrix' % prefix
     core.plotting.plot_matrix_map(
         matrix=diffusion_constant_matrix, mask_matrix=mask_matrix, 
-        output_directory=output_directory, frame_prefix='%s_diffusion_constant_matrix' % prefix, 
+        output_directory=output_directory, frame_prefix=d_map_image_prefix, 
         font_size=14, title=r'Diffusion Constant ($\mu$m$^2$/s)', tick_count=3)
 
-    # Plot the anomalous matrix 
+    # Plot the anomalous matrix
+    a_map_image_prefix = '%s_anomalous_matrix' % prefix
     core.plotting.plot_matrix_map(
         matrix=anomalous_exponent_matrx, mask_matrix=mask_matrix, 
-        output_directory=output_directory, frame_prefix='%s_anomalous_matrix' % prefix, 
+        output_directory=output_directory, frame_prefix=a_map_image_prefix, 
         font_size=14, title='Anomalous Exponent', tick_count=3)
 
     # Plot the drift velocity matrix
+    v_map_image_prefix = '%s_drift_velocity_matrix' % prefix
     core.plotting.plot_matrix_map(
         matrix=drift_velocity_matrix, mask_matrix=mask_matrix, 
-        output_directory=output_directory, frame_prefix='%s_drift_velocity_matrix' % prefix, 
+        output_directory=output_directory, frame_prefix=v_map_image_prefix, 
         font_size=14, title=r'Drift Velocity ($\mu$m/s)', tick_count=3)
     
     # Save pickle file per cell
+    print('* Saving to picke files')
     # Create the pickle directory 
     pickle_directory = '%s/pickle' % output_directory
     file_utils.create_directory(pickle_directory)
-
-    # Save the pickle file 
     with open('%s/%s.pickle' % (pickle_directory, prefix), 'wb') as f:
         pickle.dump(bayes, f)
+
+    # Generate report
+    print('* Creating reports') 
+    file_utils.create_report_1_summary(output_directory=output_directory,
+                                       frame_0=prefix,
+                                       trajectory=trajectory_image_prefix,
+                                       model_selection=model_selection_image_prefix, 
+                                       d_map=d_map_image_prefix, 
+                                       a_map=a_map_image_prefix,
+                                       v_map=v_map_image_prefix)
